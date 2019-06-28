@@ -1,0 +1,97 @@
+//OZE8352Z JOB (0844,00000000),'RECTYPE 01 & 02 XXX ',                  
+//             CLASS=T,PRTY=15,                                         
+//             REGION=0K,                                               
+//             MSGCLASS=X,                                              
+//             NOTIFY=OZE8352                                           
+//*------------------------------------------------------------------*  
+//JOBLIB   DD  DSN=PROD.LOADLIB,DISP=SHR                                
+//********************************************************************* 
+//DYLPRG   EXEC PGM=DYL280,REGION=1024K,COND=(0,NE)                     
+//STEPLIB  DD DSN=VISIONR.DB2DYN.LOAD,DISP=SHR                          
+//         DD DSN=VISIONR.LOAD.LIBRARY,DISP=SHR                         
+//         DD DSN=DGP1X.SDSNEXIT,DISP=SHR       <--- DB2 SDSNEXIT       
+//         DD DSN=DSNPROD.SDSNLOAD,DISP=SHR                             
+//SYSCOPY  DD DSN=DB2PROD.DCLGEN,DISP=SHR                               
+//SYSPRINT DD SYSOUT=*                                                  
+//SYS280R  DD SYSOUT=*                                                  
+//DYLDBUG  DD SYSOUT=*                                                  
+//FILEIN   DD DSN=TEST.REC01.REC02.DT0922,DISP=SHR               
+//FILEOUT  DD DSN=TEST.REC01.REC02.MRBPAT01,                     
+//         DISP=(NEW,CATLG,DELETE),                                     
+//         UNIT=SYSDA,                                                  
+//         SPACE=(CYL,(10,4),RLSE),                                     
+//         AVGREC=M,                                                    
+//         RECFM=FB,                                                    
+//         LRECL=80,                                                    
+//         BLKSIZE=0                                                    
+//SYS004   DD UNIT=SYSDA,SPACE=(TRK,(5,5))                              
+//SYSIN    DD *                                                         
+  OPTION STRUCTURED2 TSIZE 32K                                          
+   REPORT 80 WIDE 3 BETWEEN                                             
+                                                                        
+  FILE FILEIN FB 240 STATUS ENDINPT                                     
+   FILEIN_REC 240                                                       
+   REDEFINE FILEIN_REC                                                  
+   WS_COID_ID_FL      05                                                
+   FILLER             01                                                        
+   WS_PAT_NO_FL       09                                                
+   FILLER             01                                                        
+   WS_SRC_ADM_FL      01                                                
+   FILLER             01                                                        
+   WS_ADM_DX_FL       07                                                
+   FILLER            215                                                
+                                                                        
+  FILE FILEOUT FB  80 OUTPUT FROM FILEOUT                               
+       OUTPUT_REC  80                                                   
+                                                                        
+  WORKAREA                                                              
+                                                                        
+    WS_OUTPUT                80                                         
+    REDEFINE    WS_OUTPUT                                               
+      WS_CO_ID               05                                         
+      WS_PAT_NO              12                                         
+      WS_PAT_SEQ             04                                         
+      WS_ADMIT_DX_CD_I10     07                                         
+      FILLER                 52                                         
+                                                                        
+*********************************************************************** 
+*  COBOL COPY BOOKS                                                     
+*********************************************************************** 
+  MAINLINE:                                                             
+                                                                        
+  EXEC SQL                                                              
+    WHENEVER SQLERROR                                                   
+    CONTINUE                                                            
+  ENDEXEC                                                               
+********************************************************************    
+      READ FILEIN                                                       
+      IF ENDINPT EQ 'E'                                                 
+         STOP                                                           
+      ELSE                                                              
+        EXEC SQL                                                        
+          SELECT CO_ID, PAT_NO, PAT_SEQ, ADMIT_DX_CD_I10                
+            INTO :WS_CO_ID, :WS_PAT_NO, :WS_PAT_SEQ,                    
+                 :WS_ADMIT_DX_CD_I10                                    
+            FROM MRPRODF.MRBPAT                                         
+                WHERE CO_CD   = 'A'                  AND                
+                      CO_ID   = :WS_COID_ID_FL       AND                
+                      PAT_NO  = :WS_PAT_NO_FL                           
+        ENDEXEC                                                         
+                                                                        
+        IF DYLSQLCODE EQ 0                                              
+         MOVE WS_OUTPUT TO OUTPUT_REC                                   
+         WRITE FILEOUT                                                  
+        ELSE IF DYLSQLCODE NE 0                                         
+              PRINT  'SELECT FAILED***************************'         
+              PRINT  'RECORD =' WS_OUTPUT                               
+              PRINT  'DYLSQLCODE ' DYLSQLCODE                           
+             ENDIF                                                      
+        ENDIF                                                           
+      ENDIF                                                             
+     GOTO MAINLINE                                                      
+     ON END OF INPUT                                                    
+      STOP                                                              
+/*                                                                      
+//STEP020  EXEC PGM=ABEND,COND=(0,GE,DYLPRG),                           
+//             PARM='DYLPRG ABEND'                                      
+//*--------------------------------------------------------------------

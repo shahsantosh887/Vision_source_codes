@@ -1,0 +1,230 @@
+//LYI6892Z JOB (0844,00000000),'TEST EXECUTION- XXX ',                  00010000
+//             CLASS=T,PRTY=15,                                         00010100
+//             REGION=0K,                                               00010200
+//             MSGCLASS=X,                                              00011000
+//             NOTIFY=LYI6892                                           00020000
+//  SET FILE1=IBM7685.PHYS.RESYNC2.C16406                               00060000
+//* JCLLIB ORDER='NAL6670.RESYNC.PRC'                                   00070000
+//JOBLIB  DD DSN=SYSTEST.LOADLIB,DISP=SHR                               00080000
+//        DD DSN=PROD.LOADLIB,DISP=SHR                                  00090000
+//        DD DSN=DGT1X.SDSNEXIT,DISP=SHR                                00100000
+//        DD DSN=DSNTEST.SDSNLOAD,DISP=SHR                              00110000
+//STEP010  EXEC PGM=DYL280,COND=(0,NE),                                 00360000
+//             REGION=0K                                                00370000
+//STEPLIB  DD  DSN=VISIONR.DB2DYN.LOAD,DISP=SHR                         00380000
+//         DD  DSN=VISIONR.LOAD.LIBRARY,DISP=SHR                        00390000
+//         DD  DSN=DGT1X.SDSNEXIT,DISP=SHR                              00400000
+//         DD  DSN=DSNTEST.SDSNLOAD,DISP=SHR                            00410000
+//SYS004   DD  UNIT=SYSDA,                                              00420000
+//             SPACE=(TRK,(4,4))                                        00430000
+//DYLDBUG  DD  SYSOUT=*                                                 00440000
+//SYSPRINT DD  SYSOUT=*                                                 00450000
+//SYS280R  DD  SYSOUT=*                                                 00460000
+//SYSOUT   DD  SYSOUT=*                                                 00470000
+//SYSCOPY  DD  DSN=DB2TEST.DCLGEN,                                      00480000
+//             DISP=SHR                                                 00490000
+//*FILEIN   DD DSN=IBM7685.PHYS.RESYNC2.C16776,DISP=SHR                 00500000
+//FILEIN   DD DSN=&FILE1,DISP=SHR                                       00510000
+//FILEOUT  DD DSN=TEST.PHYS.RESYNC2.FOUND,                              00520000
+//         DISP=(NEW,CATLG,DELETE),                                     00530000
+//         UNIT=SYSDA,                                                  00540000
+//         SPACE=(CYL,(10,4),RLSE),                                     00550000
+//         AVGREC=M,                                                    00560000
+//         RECFM=FB,                                                    00570000
+//         LRECL=80,                                                    00580000
+//         BLKSIZE=0                                                    00590000
+//FILEOUT1 DD DSN=TEST.PHYS.RESYNC2.NOTFOUND,                           00600000
+//         DISP=(NEW,CATLG,DELETE),                                     00610000
+//         UNIT=SYSDA,                                                  00620000
+//         SPACE=(CYL,(10,4),RLSE),                                     00630000
+//         AVGREC=M,                                                    00640000
+//         RECFM=FB,                                                    00650000
+//         LRECL=80,                                                    00660000
+//         BLKSIZE=0                                                    00670000
+//SYSIN    DD *                                                         00680000
+  OPTION STRUCTURED2 TSIZE 264K                                         00690000
+   REPORT 80 WIDE 3 BETWEEN                                             00700000
+                                                                        00710000
+  FILE FILEIN FB 80  STATUS ENDINPT                                     00720000
+   FILEIN_REC 80                                                        00730000
+   REDEFINE FILEIN_REC                                                  00740000
+   WS_COID_ID_FL      05                                                00750000
+   FILLER             01                                                00760000
+   WS_CONV_PHY_FL     05                                                00770000
+   FILLER             01                                                00780000
+   WS_PHY_FL          04                                                00790000
+   FILLER             64                                                00800000
+                                                                        00810000
+  FILE FILEOUT FB  80 OUTPUT FROM FILEOUT                               00820000
+       OUTPUT_REC  80                                                   00830000
+                                                                        00840000
+  WORKAREA                                                              00850000
+                                                                        00860000
+    WS_OUTPUT                80                                         00870000
+    REDEFINE    WS_OUTPUT                                               00880000
+      WS_CONV_PHY_MT         05                                         00890000
+      FILLER                 01 VALUE ','                               00900000
+      WS_CO_ID               05                                         00910000
+      FILLER                 01 VALUE ','                               00920000
+      WS_CONV_PHY            05                                         00930000
+      FILLER                 01 VALUE ','                               00940000
+      WS_PHY                 04                                         00950000
+      FILLER                 01 VALUE ','                               00960000
+      WS_CO_ID_DB            05                                         00970000
+      FILLER                 01 VALUE ','                               00980000
+      WS_CONV_PHY_DB         05                                         00990000
+      FILLER                 01 VALUE ','                               01000000
+      WS_PHY_DB              04                                         01010000
+      FILLER                 01 VALUE ','                               01020000
+      WS_RESULTO             07                                         01030000
+      FILLER                 01 VALUE ','                               01040000
+      WS_RESULTT             07                                         01050000
+      FILLER                 26                                         01060000
+                                                                        01070000
+  FILE FILEOUT1 FB  80 OUTPUT FROM FILEOUT1                             01080000
+       OUTPUT_REC1  80                                                  01090000
+                                                                        01100000
+  WORKAREA                                                              01110000
+                                                                        01120000
+    WS_OUTPUT1               80                                         01130000
+    REDEFINE    WS_OUTPUT1                                              01140000
+      WS_CONV_PHY1           05                                         01150000
+      FILLER                 75                                         01160000
+                                                                        01170000
+*************************************                                   01180000
+ WORKAREA                                                               01190000
+*************************************                                   01200000
+   COPY MRBPHY COBOL                                                    01210000
+STATEON                                                                 01220000
+   WS_COID               05 CH                                          01230000
+   WS_PAT_NUM            12 CH                                          01240000
+   WS_CON_PHYCD          05 CH                                          01250000
+   WS_PHYCD              04 NU                                          01260000
+*********************************************************************** 01270000
+*  COBOL COPY BOOKS                                                     01280000
+*********************************************************************** 01290000
+  MAINLINE:                                                             01300000
+                                                                        01310000
+  EXEC SQL                                                              01320000
+    WHENEVER SQLERROR                                                   01330000
+    CONTINUE                                                            01340000
+  ENDEXEC                                                               01350000
+********************************************************************    01360000
+      READ FILEIN                                                       01370000
+      IF ENDINPT EQ 'E'                                                 01380000
+         STOP                                                           01390000
+      ELSE                                                              01400000
+      MOVE WS_COID_ID_FL TO PHY_CO_ID                                   01410000
+      MOVE WS_CONV_PHY_FL TO PHY_CNV_PHYSICIAN_CD                       01420000
+      MOVE WS_CONV_PHY_FL TO WS_CON_PHYCD                               01430000
+      EXEC SQL                                                          01440000
+         SELECT CO_ID,                                                  01450000
+              PHYSICIAN_CD,                                             01460000
+              CNV_PHYSICIAN_CD                                          01470000
+         INTO :PHY_CO_ID,                                               01480000
+              :PHY_PHYSICIAN_CD,                                        01490000
+              :PHY_CNV_PHYSICIAN_CD                                     01500000
+         FROM MRTEST.MRBPHY                                             01510000
+         WHERE CO_ID = :PHY_CO_ID AND                                   01520000
+         CNV_PHYSICIAN_CD = :PHY_CNV_PHYSICIAN_CD                       01530000
+      ENDEXEC                                                           01540000
+      IF DYLSQLCODE EQ 0                                                01550000
+               MOVE PHY_PHYSICIAN_CD TO WS_PHYCD                        01560000
+               IF WS_CONV_PHY_FL EQ WS_CON_PHYCD AND                    01570000
+                  WS_PHY_FL EQ WS_PHYCD                                 01580000
+                  MOVE PHY_CNV_PHYSICIAN_CD TO WS_CONV_PHY_MT           01590000
+                  MOVE PHY_CO_ID            TO WS_CO_ID                 01600000
+                  MOVE WS_CONV_PHY_FL       TO WS_CONV_PHY              01610000
+                  MOVE WS_PHY_FL            TO WS_PHY                   01620000
+                  MOVE PHY_CO_ID            TO WS_CO_ID_DB              01630000
+                  MOVE PHY_CNV_PHYSICIAN_CD TO WS_CONV_PHY_DB           01640000
+                  MOVE PHY_PHYSICIAN_CD     TO WS_PHY_DB                01650000
+                  MOVE 'MATCH'              TO WS_RESULTO               01660000
+                  MOVE 'MATCH'              TO WS_RESULTT               01670000
+                  MOVE WS_OUTPUT TO OUTPUT_REC                          01680000
+                  WRITE FILEOUT                                         01690000
+               ELSE                                                     01700000
+                  MOVE PHY_CNV_PHYSICIAN_CD TO WS_CONV_PHY_MT           01710000
+                  MOVE PHY_CO_ID            TO WS_CO_ID                 01720000
+                  MOVE WS_CONV_PHY_FL       TO WS_CONV_PHY              01730000
+                  MOVE WS_PHY_FL            TO WS_PHY                   01740000
+                  MOVE PHY_CO_ID            TO WS_CO_ID_DB              01750000
+                  MOVE PHY_CNV_PHYSICIAN_CD TO WS_CONV_PHY_DB           01760000
+                  MOVE PHY_PHYSICIAN_CD     TO WS_PHY_DB                01770000
+                  MOVE 'MATCH'              TO WS_RESULTO               01780000
+                  MOVE 'UNMATCH'            TO WS_RESULTT               01790000
+                  MOVE WS_OUTPUT TO OUTPUT_REC                          01800000
+                  WRITE FILEOUT                                         01810000
+               ENDIF                                                    01820000
+      ENDIF                                                             01830000
+      IF DYLSQLCODE EQ 100                                              01840000
+         MOVE WS_CONV_PHY_FL       TO WS_CONV_PHY1                      01850000
+         MOVE WS_OUTPUT1 TO OUTPUT_REC1                                 01860000
+         WRITE FILEOUT1                                                 01870000
+      ENDIF                                                             01880000
+      ENDIF                                                             01890000
+      GOTO MAINLINE                                                     01900000
+      ON END OF INPUT                                                   01910000
+      STOP                                                              01920000
+/*                                                                      01930000
+//STEP020  EXEC PGM=ABEND,COND=(0,GE,STEP010),                          01940000
+//             PARM='STEP010 ABEND'                                     01950000
+//********************************************************************* 01960000
+//* GENERATE SEQ NUMBERS                                                01970000
+//********************************************************************* 01980000
+//JSTEP010 EXEC PGM=SORT                                                01990000
+//SORTIN   DD DSN=TEST.PHYS.RESYNC2.FOUND,DISP=SHR                      02000000
+//SORTOUT  DD DSN=&FOT1,                                                02010000
+//         DISP=(,PASS),                                                02020000
+//         UNIT=SYSDA,                                                  02030000
+//         SPACE=(CYL,(10,4),RLSE),                                     02040000
+//         AVGREC=M,                                                    02050000
+//         RECFM=FB,                                                    02060000
+//         LRECL=80,                                                    02070000
+//         BLKSIZE=0                                                    02080000
+//SYSOUT   DD SYSOUT=*                                                  02090000
+//SYSIN DD *                                                            02100000
+     SORT FIELDS=COPY                                                   02110000
+     OUTREC OVERLAY=(59:SEQNUM,5,ZD,START=10000,INCR=1)                 02120000
+/*                                                                      02130000
+//********************************************************************* 02140000
+//* GENERATE SEQ NUMBERS FILE2                                          02150000
+//********************************************************************* 02160000
+//JSTEP020 EXEC PGM=SORT                                                02170000
+//SORTIN   DD DSN=TEST.PHYS.RESYNC2.NOTFOUND,DISP=SHR                   02180000
+//SORTOUT  DD DSN=&NOTFOT1,                                             02190000
+//         DISP=(,PASS,),                                               02200000
+//         UNIT=SYSDA,                                                  02210000
+//         SPACE=(CYL,(10,4),RLSE),                                     02220000
+//         AVGREC=M,                                                    02230000
+//         RECFM=FB,                                                    02240000
+//         LRECL=80,                                                    02250000
+//         BLKSIZE=0                                                    02260000
+//SYSOUT   DD SYSOUT=*                                                  02270000
+//SYSIN DD *                                                            02280000
+     SORT FIELDS=COPY                                                   02290000
+     OUTREC OVERLAY=(8:SEQNUM,5,ZD,START=10000,INCR=1)                  02300000
+/*                                                                      02310000
+//********************************************************************* 02320000
+//* STEP TO CHECK PAT FROM MRBPBL TABLE USING GIVEN FILE                02330000
+//********************************************************************* 02340000
+//STEP018  EXEC PGM=SORT                                                02350000
+//SYSOUT   DD SYSOUT=*                                                  02360000
+//IN1 DD DSN=&FOT1,DISP=SHR                                             02370000
+//IN2 DD DSN=&NOTFOT1,DISP=SHR                                          02380000
+//SORTOUT  DD DSN=TEST.PHYS.RESYNC2.FINAL,                              02390000
+//         DISP=(NEW,CATLG,DELETE),                                     02400000
+//         UNIT=SYSDA,                                                  02410000
+//         SPACE=(CYL,(10,4),RLSE),                                     02420000
+//         AVGREC=M,                                                    02430000
+//         RECFM=FB,                                                    02440000
+//         LRECL=100,                                                   02450000
+//         BLKSIZE=0                                                    02460000
+//SYSIN DD *                                                            02470000
+    JOINKEYS F1=IN1,FIELDS=(59,5,A)                                     02480000
+    JOINKEYS F2=IN2,FIELDS=(8,5,A)                                      02490000
+    JOIN UNPAIRED,F1,F2                                                 02500000
+    REFORMAT FIELDS=(F1:1,63,F2:1,12,?)                                 02510000
+    OPTION COPY                                                         02520000
+    OUTREC FIELDS=(1:1,57,C',',59:64,5)                                 02530000
+/*                                                                      02540000

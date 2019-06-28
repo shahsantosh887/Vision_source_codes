@@ -1,0 +1,237 @@
+//LYI6892Z JOB (0844,00000000),'F1 16912',                              J0013075
+//             CLASS=T,PRTY=15,                                                 
+//             REGION=0K,                                                       
+//             MSGCLASS=X,                                                      
+//             NOTIFY=LYI6892                                                   
+//*OWNER SHAH, SANTOSH        N/A      N/A                                      
+//************************************************************          00000800
+//JOBLIB    DD DSN=PROD.LOADLIB,DISP=SHR                                00000900
+//          DD DSN=DGT1X.SDSNEXIT,DISP=SHR                              00001000
+//          DD DSN=DSNTEST.SDSNLOAD,DISP=SHR                            00001100
+//********************************************************************* 00001200
+//*                                                                     00001300
+//********************************************************************* 00001400
+//STEP003  EXEC PGM=DYL280,REGION=1024K                                 00001500
+//STEPLIB  DD DSN=VISIONR.DB2DYN.LOAD,DISP=SHR                          00001600
+//         DD DSN=VISIONR.LOAD.LIBRARY,DISP=SHR                         00001700
+//         DD DSN=DGT1X.SDSNEXIT,DISP=SHR       <--- DB2 SDSNEXIT       00001800
+//         DD DSN=DSNTEST.SDSNLOAD,DISP=SHR                             00001900
+//SYSCOPY  DD DSN=DB2PROD.DCLGEN,DISP=SHR                               00002000
+//SYSPRINT DD SYSOUT=*                                                  00002100
+//SYS280R  DD SYSOUT=*                                                  00002200
+//DYLDBUG  DD SYSOUT=*                                                  00002300
+//FILEIN   DD DSN=TESTMR.REC01.REC02.DT0922.U16912,DISP=SHR             00002410
+//SYS004   DD UNIT=SYSDA,SPACE=(TRK,(5,5))                              00002500
+//FILEOUT1 DD DSN=TESTMR.REC01.REC02.DT0922.U16912.KEY.F01,             00290000
+//         DISP=(NEW,CATLG,DELETE),                                     00300000
+//         UNIT=SYSDA,                                                  00310000
+//         SPACE=(CYL,(10,4),RLSE),                                     00320000
+//         AVGREC=M,                                                    00330000
+//         RECFM=FB,                                                    00340000
+//         LRECL=80,                                                    00350000
+//         BLKSIZE=0                                                    00360000
+//FILEOUT2 DD DSN=TESTMR.REC01.REC02.DT0922.U16912.NFD,                 00290000
+//         DISP=(NEW,CATLG,DELETE),                                     00300000
+//         UNIT=SYSDA,                                                  00310000
+//         SPACE=(CYL,(10,4),RLSE),                                     00320000
+//         AVGREC=M,                                                    00330000
+//         RECFM=FB,                                                    00340000
+//         LRECL=80,                                                    00350000
+//         BLKSIZE=0                                                    00360000
+//SYSIN    DD *                                                         00002600
+ ;                                                                      00002700
+ ;                                                                      00002800
+*****************************************************************       00002900
+ OPTION STRUCTURED2 TSIZE 32K                                           00003000
+  REPORT 80 WIDE 3 BETWEEN                                              00003100
+                                                                        00003200
+  FILE FILEIN   FB 240 STATUS ENDSTAT1                                  00003300
+    FI_REC                 240 CH                                       00003400
+    REDEFINE FI_REC                                                     00003500
+    FI_COID            05 NU                                            00003600
+    FI_FILLER1         01 CH                                            00003700
+    FI_PAT_NUM         09 NU                                            00003800
+    FI_FILLER2         01 CH                                            00003900
+    FI_SRC_OF_ADMIT    01 NU                                            00004000
+    FI_FILLER3         01 CH                                            00004100
+    FI_ADMIT_DX_CD_I10 07 CH                                            00004200
+    FILLER             215 CH                                           00003900
+                                                                        00004300
+  FILE FILEOUT1 FB  80 OUTPUT FROM FILEOUT1                             00690000
+       OUTPUT_REC1  80                                                  00700000
+                                                                        00710000
+  WORKAREA                                                              00720000
+                                                                        00730000
+    WS_OUTPUT1               80                                         00740000
+    REDEFINE    WS_OUTPUT1                                              00750000
+      WS_CO_CD1              01 CH                                      00760000
+      FILLER                 01 CH VALUE '|'                                    
+      WS_CO_ID1              05 CH                                      00760000
+      FILLER                 01 CH VALUE '|'                                    
+      WS_BILL_GEN_DT1        10 CH                                      00760000
+      FILLER                 01 CH VALUE '|'                                    
+      WS_PAT_TYPE1           03 CH                                      00770000
+      FILLER                 01 CH VALUE '|'                                    
+      WS_PAT_NO1             12 CH                                      00770000
+      FILLER                 01 CH VALUE '|'                                    
+      WS_PAT_SEQ1            04 CH                                      00770000
+      FILLER                 01 CH VALUE '|'                                    
+      WS_SRC_OF_ADMIT1       01 CH                                      00780002
+      FILLER                 01 CH VALUE '|'                                    
+      WS_ADMIT_DX_CD_I101    07 CH                                      00780002
+      FILLER                 01 CH VALUE '|'                                    
+      FILLER                 29 CH                                      00790002
+                                                                        01060000
+                                                                                
+                                                                                
+  FILE FILEOUT2 FB  80 OUTPUT FROM FILEOUT2                             00690000
+       OUTPUT_REC2  80                                                  00700000
+                                                                        00710000
+  WORKAREA                                                              00720000
+                                                                        00730000
+    WS_OUTPUT2               80                                         00740000
+    REDEFINE    WS_OUTPUT2                                              00750000
+      WS_CO_ID2              05 CH                                      00003600
+      FILLER                 01 CH VALUE '|'                            00003700
+      WS_PAT_NO2             09 CH                                      00003800
+      FILLER                 01 CH VALUE '|'                            00003900
+      WS_SRC_OF_ADMIT2       01 CH                                      00004000
+      FILLER                 01 CH VALUE '|'                                    
+      WS_ADMIT_DX_CD_I102    07 CH                                              
+      FILLER                 01 CH VALUE '|'                                    
+      FILLER                 51 CH                                      00003900
+                                                                                
+*****************************************************************       00005000
+STATEON                                                                 00005100
+   WS_COID                  05 CH                                       00005300
+   WS_PAT_NUM               09 CH                                       00005400
+   WS_SRC_OF_ADMIT          01 CH                                       00780002
+   WS_ADMIT_DX_CD_I10       07 CH                                       00780002
+                                                                        00006000
+**********************                                                          
+WORKAREA                                                                        
+**********************                                                          
+  WS_PBL_CO_CD              01 CH                                               
+*                                                                               
+  WS_PBL_CO_ID              05 PD                                               
+  WS_NUM_CO_ID              05 NU                                               
+*                                                                               
+  WS_PBL_BILL_GEN_DT        10 CH                                               
+  WS_PBL_PAT_TYPE           03 CH                                               
+*                                                                               
+  WS_PBL_PAT_NO             12 PD                                               
+  WS_NUM_PAT_NO             12 NU                                               
+*                                                                               
+  WS_PBL_PAT_SEQ            04 PD                                               
+  WS_NUM_PAT_SEQ            04 NU                                               
+*                                                                               
+  WS_PBL_SRC_OF_ADMIT       01 CH                                               
+*                                                                               
+*                                                                               
+  WS_PAT_ADMIT_DX_CD_I10    07 CH                                               
+*                                                                               
+  WS_TOT_REC                07 PD                                               
+  WS_COUNTER                07 NU  VALUE 0                                      
+*                                                                               
+  WS_TOT_PAT_FND_NOT_UPD    07 NU  VALUE 0                                      
+  WS_TOT_PBL_UPD_CNT        07 NU  VALUE 0                                      
+  WS_TOT_PAT                07 NU  VALUE 0                                      
+  WS_TOT_PAT_NOT_FOUND      07 NU  VALUE 0                                      
+                                                                                
+                                                                                
+********************************************************************    00006100
+ MAINLINE:                                                              00006200
+********************************************************************    00006300
+  EXEC SQL                                                                      
+    WHENEVER SQLERROR                                                           
+    CONTINUE                                                                    
+  ENDEXEC                                                                       
+                                                                                
+*-----------------------------------------------                                
+  READ FILEIN                                                           00006400
+  IF ENDSTAT1 EQ 'E'                                                    00006500
+     GOTO STOPPARA                                                      00006600
+  ELSE                                                                  00006700
+     MOVE    FI_COID            TO  WS_COID                             00006800
+     MOVE    FI_PAT_NUM         TO  WS_PAT_NUM                          00006900
+     MOVE    FI_SRC_OF_ADMIT    TO  WS_SRC_OF_ADMIT                     00007100
+     MOVE    FI_ADMIT_DX_CD_I10 TO  WS_ADMIT_DX_CD_I10                  00007100
+   EXEC SQL                                                                     
+    SELECT CO_CD                                                                
+          ,CO_ID                                                                
+          ,BILL_GEN_DT                                                          
+          ,PAT_TYPE                                                             
+          ,PAT_NO                                                               
+          ,PAT_SEQ                                                              
+    INTO                                                                        
+        :WS_PBL_CO_CD,                                                          
+        :WS_PBL_CO_ID,                                                          
+        :WS_PBL_BILL_GEN_DT,                                                    
+        :WS_PBL_PAT_TYPE,                                                       
+        :WS_PBL_PAT_NO,                                                         
+        :WS_PBL_PAT_SEQ,                                                        
+    FROM MRTEST.MRBPBL                                                          
+    WHERE     CO_CD      = 'A'                                                  
+      AND     CO_ID      = 16912                                                
+      AND     PAT_NO     = :WS_PAT_NUM                                          
+   ENDEXEC                                                                      
+   IF DYLSQLSTAT EQ 'Y'   OR  DYLSQLCODE EQ 0                                   
+      PERFORM  WRTPBLPRA     TO  EXTPBLWRT                                      
+   ELSE                                                                         
+      PERFORM  WRTPBLNPRA    TO  EXTPBLNWRT                                     
+   ENDIF                                                                        
+  ENDIF                                                                 00007300
+                                                                                
+   GOTO MAINLINE                                                                
+   ON END OF INPUT                                                              
+     GOTO STOPPARA                                                              
+                                                                                
+                                                                                
+*----------                                                                     
+ WRTPBLPRA:                                                                     
+*----------                                                                     
+     PRINT 'WRITE PARA***'                                                      
+ MOVE WS_PBL_CO_CD          TO WS_CO_CD1                                01640000
+*                                                                               
+ MOVE WS_PBL_CO_ID          TO WS_NUM_CO_ID                             01640000
+ MOVE WS_NUM_CO_ID          TO WS_CO_ID1                                01640000
+*                                                                               
+ MOVE WS_PBL_BILL_GEN_DT    TO WS_BILL_GEN_DT1                          01640000
+ MOVE WS_PBL_PAT_TYPE       TO WS_PAT_TYPE1                             01640000
+*                                                                               
+ MOVE WS_PBL_PAT_NO         TO WS_NUM_PAT_NO                            01640000
+ MOVE WS_NUM_PAT_NO         TO WS_PAT_NO1                               01640000
+*                                                                               
+ MOVE WS_PBL_PAT_SEQ        TO WS_NUM_PAT_SEQ                           01640000
+ MOVE WS_NUM_PAT_SEQ        TO WS_PAT_SEQ1                              01640000
+*                                                                               
+ MOVE WS_SRC_OF_ADMIT    TO WS_SRC_OF_ADMIT1                            01640000
+ MOVE WS_ADMIT_DX_CD_I10 TO WS_ADMIT_DX_CD_I101                         01640000
+ MOVE WS_OUTPUT1            TO OUTPUT_REC1                              01650000
+ WRITE FILEOUT1                                                         01660002
+                                                                                
+*----------                                                                     
+ EXTPBLWRT:                                                                     
+*----------                                                                     
+                                                                        00008400
+*-----------                                                                    
+ WRTPBLNPRA:                                                                    
+*-----------                                                                    
+     PRINT 'WRITE NOT FOUND PARA****'                                           
+ MOVE WS_COID               TO WS_CO_ID2                                01640000
+ MOVE WS_PAT_NUM            TO WS_PAT_NO2                               01640000
+ MOVE WS_SRC_OF_ADMIT       TO WS_SRC_OF_ADMIT2                         01640000
+ MOVE WS_ADMIT_DX_CD_I10    TO WS_ADMIT_DX_CD_I102                      01640000
+ MOVE WS_OUTPUT2            TO OUTPUT_REC2                              01650000
+ WRITE FILEOUT2                                                         01660002
+                                                                                
+*-----------                                                                    
+ EXTPBLNWRT:                                                                    
+*-----------                                                                    
+                                                                                
+*---------                                                                      
+ STOPPARA:                                                                      
+*---------                                                                      
+ STOP                                                                           
+                                                                                
+//*                                                                     00014900

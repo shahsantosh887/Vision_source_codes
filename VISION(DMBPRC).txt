@@ -1,0 +1,78 @@
+//LYI6892Z JOB (0844,00000000),'SEL DMBPRC',                                    
+//             CLASS=T,PRTY=15,                                                 
+//             REGION=0K,                                                       
+//             MSGCLASS=X,                                                      
+//             NOTIFY=LYI6892                                                   
+//*------------------------------------------------------------------*  00070000
+//JOBLIB   DD  DSN=PROD.LOADLIB,DISP=SHR                                00080003
+//********************************************************************* 00100000
+//DYLPRG   EXEC PGM=DYL280,REGION=1024K,COND=(0,NE)                     00110000
+//STEPLIB  DD DSN=VISIONR.DB2DYN.LOAD,DISP=SHR                          00120000
+//         DD DSN=VISIONR.LOAD.LIBRARY,DISP=SHR                         00130000
+//         DD DSN=DGT1X.SDSNEXIT,DISP=SHR       <--- DB2 SDSNEXIT       00140003
+//         DD DSN=DSNTEST.SDSNLOAD,DISP=SHR                             00150003
+//SYSCOPY  DD DSN=DB2PROD.DCLGEN,DISP=SHR                               00160003
+//SYSPRINT DD SYSOUT=*                                                  00170000
+//SYS280R  DD SYSOUT=*                                                  00180000
+//DYLDBUG  DD SYSOUT=*                                                  00190000
+//FILEOUT  DD DSN=TEST.EXTRACT.FILEDS.MRBPRC,                           00200003
+//         DISP=(NEW,CATLG,DELETE),                                     00210000
+//         UNIT=SYSDA,                                                  00220000
+//         SPACE=(CYL,(10,4),RLSE),                                     00230000
+//         AVGREC=M,                                                    00240000
+//         RECFM=FB,                                                    00250000
+//         LRECL=80,                                                    00260003
+//         BLKSIZE=0                                                    00270000
+//SYS004   DD UNIT=SYSDA,SPACE=(TRK,(5,5))                              00280000
+//SYSIN    DD *                                                         00290000
+                                                                        00326003
+   OPTION STRUCTURED2 TSIZE 32K                                         00300000
+   REPORT 80 WIDE 3 BETWEEN                                             00310000
+                                                                                
+  FILE FILEOUT FB  80 OUTPUT FROM FILEOUT                               00340003
+       OUTPUT_REC  80                                                   00350003
+    WS_OUTPUT                80                                         00410003
+    REDEFINE    WS_OUTPUT                                               00420000
+      WS_CO_ID               05                                         00430003
+      WS_DEPT                04                                         00431003
+      WS_PROC_CODE           06                                         00432003
+      FILLER                 65                                         00440003
+                                                                        00450000
+*********************************************************************** 00460000
+    COPY DMBPRC COBOL                                                   00470000
+*********************************************************************** 00480000
+  MAINLINE:                                                             00530000
+                                                                        00530103
+  EXEC SQL                                                              00531003
+    WHENEVER SQLERROR                                                   00532003
+    CONTINUE                                                            00533003
+  ENDEXEC                                                               00534003
+********************************************************************    00540003
+        EXEC SQL                                                        00570000
+          SELECT CO_ID,                                                 00580003
+                 PROC_CODE,                                             00580003
+                 DEPT                                                   00580003
+            INTO :PRC_CO_ID,                                            00590003
+                 :PRC_PROC_CODE,                                        00590003
+                 :PRC_DEPT                                              00590003
+            FROM DMTEST.DMBPRC                                          00600003
+        ENDEXEC                                                         00620000
+                                                                        00630000
+        IF DYLSQLCODE EQ 0                                              00640000
+            MOVE PRC_CO_ID      TO WS_CO_ID                                     
+            MOVE PRC_PROC_CODE  TO WS_PROC_CODE                                 
+            MOVE PRC_DEPT       TO WS_DEPT                                      
+            MOVE WS_OUTPUT TO OUTPUT_REC                                00641003
+            WRITE FILEOUT                                               00642003
+        ELSE IF DYLSQLCODE NE 0                                         00650000
+              PRINT  'DYLSQLCODE ' DYLSQLCODE                           00680000
+             ENDIF                                                      00690000
+        ENDIF                                                           00700000
+      ENDIF                                                             00800003
+     GOTO MAINLINE                                                      00801003
+     ON END OF INPUT                                                    00802003
+      STOP                                                              00810000
+/*                                                                      00820000
+//STEP020  EXEC PGM=ABEND,COND=(0,GE,DYLPRG),                           00830000
+//             PARM='DYLPRG ABEND'                                      00840000
+//*--------------------------------------------------------------------*00850000

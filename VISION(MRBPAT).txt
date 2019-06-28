@@ -1,0 +1,175 @@
+//LYI6892Z JOB (0844,00000000),'PAT  EXECUTION- XXX ',                  J0050895
+//             CLASS=T,PRTY=15,                                         00010100
+//             REGION=0K,                                               00010200
+//             MSGCLASS=X,                                              00011000
+//             NOTIFY=LYI6892                                           00020000
+//JOBLIB   DD DSN=SYSTEST.LOADLIB,                                      00060000
+//            DISP=SHR                                                  00070000
+//********************************************************************* 00080000
+//* STEP TO CHECK PAT FROM MRBPAT TABLE USING GIVEN FILE                00090000
+//********************************************************************* 00100000
+//STEP010  EXEC PGM=DYL280,COND=(0,NE),                                 00110000
+//             REGION=0K                                                00120000
+//STEPLIB  DD  DSN=VISIONR.DB2DYN.LOAD,DISP=SHR                         00130000
+//         DD  DSN=VISIONR.LOAD.LIBRARY,DISP=SHR                        00140000
+//         DD  DSN=DGP1X.SDSNEXIT,DISP=SHR                              00150000
+//         DD  DSN=DSNPROD.SDSNLOAD,DISP=SHR                            00160000
+//SYS004   DD  UNIT=SYSDA,                                              00170000
+//             SPACE=(TRK,(4,4))                                        00180000
+//DYLDBUG  DD  SYSOUT=*                                                 00190000
+//SYSPRINT DD  SYSOUT=*                                                 00200000
+//SYS280R  DD  SYSOUT=*                                                 00210000
+//SYSOUT   DD  SYSOUT=*                                                 00211000
+//SYSCOPY  DD  DSN=PROD.COPYLIB,                                        00212000
+//             DISP=SHR                                                 00213000
+//         DD  DSN=DB2PROD.DCLGEN,                                      00214000
+//             DISP=SHR                                                 00215000
+//FILEIN   DD DSN=TEST.RJDATA.U16910.REC01.REC02.DT0927,DISP=SHR        00220003
+//*FILEIN   DD DSN=TEST.RJDATA.FILE1,DISP=SHR                           00230003
+//FILEOUT  DD DSN=TEST.U16910.REC01.REC02.PAT.UNMATPAT,                 00260000
+//         DISP=(NEW,CATLG,DELETE),                                     00270000
+//         UNIT=SYSDA,                                                  00280000
+//         SPACE=(CYL,(10,4),RLSE),                                     00290000
+//         AVGREC=M,                                                    00300000
+//         RECFM=FB,                                                    00310000
+//         LRECL=80,                                                    00320000
+//         BLKSIZE=0                                                    00330000
+//FILEOUT1 DD DSN=TEST.U16910.REC01.REC02.PAT.MADMIT,                   00340000
+//         DISP=(NEW,CATLG,DELETE),                                     00350000
+//         UNIT=SYSDA,                                                  00360000
+//         SPACE=(CYL,(10,4),RLSE),                                     00370000
+//         AVGREC=M,                                                    00380000
+//         RECFM=FB,                                                    00390000
+//         LRECL=80,                                                    00400000
+//         BLKSIZE=0                                                    00410000
+//FILEOUT2 DD DSN=TEST.U16910.REC01.REC02.PAT.UMADMIT,                  00420000
+//         DISP=(NEW,CATLG,DELETE),                                     00430000
+//         UNIT=SYSDA,                                                  00440000
+//         SPACE=(CYL,(10,4),RLSE),                                     00450000
+//         AVGREC=M,                                                    00460000
+//         RECFM=FB,                                                    00470000
+//         LRECL=80,                                                    00480000
+//         BLKSIZE=0                                                    00490000
+//SYSIN    DD *                                                         00510000
+  OPTION STRUCTURED2 TSIZE 264K                                         00520000
+   REPORT 80 WIDE 3 BETWEEN                                             00530000
+                                                                        00540000
+  FILE FILEIN FB 240  STATUS ENDINPT                                    00550000
+   FILEIN_REC 240                                                       00560000
+   REDEFINE FILEIN_REC                                                  00570000
+   WS_COID_ID_FL      05                                                00580000
+   FILLER             01                                                00590000
+   WS_PAT_NO_FL       09                                                00600000
+   FILLER             01                                                00610000
+   WS_SRC_ADM_FL      01                                                00620000
+   FILLER             01                                                00630000
+   WS_ADM_DX_FL       07                                                00640000
+   FILLER            215                                                00650000
+                                                                        00770000
+  FILE FILEOUT FB  80 OUTPUT FROM FILEOUT                               00780000
+       OUTPUT_REC  80                                                   00790000
+                                                                        00800000
+  WORKAREA                                                              00810000
+                                                                        00820000
+    WS_OUTPUT                80                                         00830000
+    REDEFINE    WS_OUTPUT                                               00840000
+      WS_CO_ID               05                                         00850000
+      WS_PAT_NO              09                                         00860000
+      WS_ADMIT_DX_CD_I10     07                                         00870000
+      FILLER                 59                                         00880000
+                                                                        00890000
+  FILE FILEOUT1 FB  80 OUTPUT FROM FILEOUT1                             00900000
+       OUTPUT_REC1  80                                                  00910000
+                                                                        00920000
+  WORKAREA                                                              00930000
+                                                                        00940000
+    WS_OUTPUT1               80                                         00950000
+    REDEFINE    WS_OUTPUT1                                              00960000
+      WS_CO_ID1              05                                         00970000
+      WS_PAT_NO1             09                                         00980000
+      WS_ADMIT_DX_FF_I101    07                                         00990000
+      WS_ADMIT_DX_FD_I101    07                                         01000000
+      FILLER                 52                                         01010000
+                                                                        01020000
+  FILE FILEOUT2 FB  80 OUTPUT FROM FILEOUT2                             01030000
+       OUTPUT_REC2  80                                                  01040000
+                                                                        01050000
+  WORKAREA                                                              01060000
+                                                                        01070000
+    WS_OUTPUT2               80                                         01080000
+    REDEFINE    WS_OUTPUT2                                              01090000
+      WS_CO_ID2              05                                         01100000
+      WS_PAT_NO2             09                                         01110000
+      WS_ADMIT_DX_FF_I102    07                                         01120000
+      WS_ADMIT_DX_FD_I102    07                                         01130000
+      FILLER                 52                                         01140000
+                                                                        01150000
+*************************************                                   01160000
+ WORKAREA                                                               01170000
+*************************************                                   01180000
+   COPY MRBPBL COBOL                                                    01181000
+   COPY MRBPAT COBOL                                                    01182000
+STATEON                                                                 01190000
+   WS_COID               05 CH                                          01200000
+   WS_PAT_NUM            12 CH                                          01210000
+*********************************************************************** 01220000
+*  COBOL COPY BOOKS                                                     01230000
+*********************************************************************** 01240000
+  MAINLINE:                                                             01250000
+                                                                        01260000
+  EXEC SQL                                                              01270000
+    WHENEVER SQLERROR                                                   01280000
+    CONTINUE                                                            01290000
+  ENDEXEC                                                               01300000
+********************************************************************    01310000
+      READ FILEIN                                                       01320000
+      IF ENDINPT EQ 'E'                                                 01330000
+         STOP                                                           01340000
+      ELSE                                                              01350000
+      MOVE WS_PAT_NO_FL TO PAT_PAT_NO                                   01351100
+      EXEC SQL                                                          01352000
+         SELECT  CO_ID,                                                 01353000
+                 PAT_NO,                                                01354000
+                 PAT_SEQ,                                               01355000
+                 ADMIT_DX_CD_I10                                        01357000
+         INTO   :PAT_CO_ID,                                             01358000
+                :PAT_PAT_NO,                                            01359000
+                :PAT_PAT_SEQ,                                           01359100
+                :PAT_ADMIT_DX_CD_I10                                    01359300
+         FROM MRPRODF.MRBPAT                                            01359500
+         WHERE  CO_CD = 'A'                                             01359600
+           AND  CO_ID IN (16910,16911,16912)                            01359700
+           AND  PAT_NO = :PAT_PAT_NO                                    01359800
+      ENDEXEC                                                           01359900
+      IF DYLSQLCODE EQ 0                                                01360300
+               IF WS_ADM_DX_FL EQ PAT_ADMIT_DX_CD_I10                   01361200
+                  MOVE PAT_CO_ID        TO WS_CO_ID1                    01361400
+                  MOVE PAT_PAT_NO       TO WS_PAT_NO1                   01361500
+                  MOVE WS_ADM_DX_FL     TO WS_ADMIT_DX_FF_I101          01361600
+                  MOVE PAT_ADMIT_DX_CD_I10 TO WS_ADMIT_DX_FD_I101       01361700
+                  MOVE WS_OUTPUT1 TO OUTPUT_REC1                        01361900
+                  WRITE FILEOUT1                                        01362000
+               ELSE                                                     01362100
+                  MOVE PAT_CO_ID        TO WS_CO_ID2                    01362200
+                  MOVE PAT_PAT_NO       TO WS_PAT_NO2                   01362300
+                  MOVE WS_ADM_DX_FL     TO WS_ADMIT_DX_FF_I102          01362400
+                  MOVE PAT_ADMIT_DX_CD_I10 TO WS_ADMIT_DX_FD_I102       01362500
+                  MOVE WS_OUTPUT2 TO OUTPUT_REC2                        01362600
+                  WRITE FILEOUT2                                        01362700
+               ENDIF                                                    01362800
+      ENDIF                                                             01363000
+      IF DYLSQLCODE EQ 100                                              01363100
+         MOVE PAT_CO_ID        TO WS_CO_ID                              01363400
+         MOVE PAT_PAT_NO       TO WS_PAT_NO                             01363500
+         MOVE WS_ADM_DX_FL     TO WS_ADMIT_DX_CD_I10                    01363600
+         MOVE WS_OUTPUT TO OUTPUT_REC                                   01363700
+         WRITE FILEOUT                                                  01363800
+      ENDIF                                                             01364000
+      ENDIF                                                             01670000
+      GOTO MAINLINE                                                     01680000
+      ON END OF INPUT                                                   01690000
+      STOP                                                              01700000
+/*                                                                      01710000
+//STEP020  EXEC PGM=ABEND,COND=(0,GE,STEP010),                          01720000
+//             PARM='STEP010 ABEND'                                     01730000
+//*--------------------------------------------------------------------*01740000

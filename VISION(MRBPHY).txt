@@ -1,0 +1,116 @@
+ OPTION NOXREF STRUCTURED2 TSIZE 36K QUALIFIERS TIMECOLON                       
+ REPORT  133 WIDE 1 BETWEEN ASA                                                 
+                                                                                
+ FILE PATFILE    FB 12   STATUS CC_EOF                                          
+  PATFILE_REC    12                                                             
+                                                                                
+  REDEFINE PATFILE_REC                                                          
+   FILE_COID           5                                                        
+   FILLER              1                                                        
+   FILE_PHYSICIAN_CD   5                                                        
+   FILLER              1                                                        
+                                                                                
+ FILE OUTFILE FB 240 OUTPUT FROM OUTFILE                                        
+ OUTFILE_REC          240 CH                                                    
+ REDEFINE OUTFILE_REC                                                           
+   NOTF_COID           5                                                        
+   FILLER              1                                                        
+   NOTF_PHYSICIAN_CD   5                                                        
+   FILLER              1                                                        
+   NOTF_FULL_NAME      24                                                       
+                                                                                
+                                                                                
+                                                                                
+ FILE FNDFILE FB 42 OUTPUT FROM FNDFILE                                         
+ FOUND_REC           42 CH                                                      
+ REDEFINE FOUND_REC                                                             
+  FND_COID           5                                                          
+  FILLER              1                                                         
+  FND_PHYSICIAN_CD   5                                                          
+  FILLER              1                                                         
+                                                                                
+ WORKAREA                                                                       
+   COPY MRBPHY COBOL                                                            
+                                                                                
+                                                                                
+                                                                                
+ WS_TOTAL_PAT      07 NU  VALUE 0                                               
+ WS_FOUND_PAT      07 NU  VALUE 0                                               
+ WS_NOTFOUND_PAT   07 NU  VALUE 0                                               
+*                                                                               
+************************************************************************        
+ BEGIN:                                                                         
+************************************************************************        
+                                                                                
+ READ PATFILE                                                                   
+                                                                                
+                                                                                
+ IF CC_EOF  EQ 'E'                                                              
+     PRINT 'FILE ENDED '                                                        
+           DYLDATE ' ' DYLETIME                                                 
+     GOTO XITBEGIN                                                              
+ ELSE                                                                           
+     PERFORM PROC TO XITPROC                                                    
+     GOTO BEGIN                                                                 
+ ENDIF                                                                          
+                                                                                
+*********************                                                           
+ XITBEGIN:                                                                      
+ STOP                                                                           
+*                                                                               
+************************************************************************        
+ PROC:                                                                          
+*************                                                                   
+      MOVE FILE_COID TO       PHY_CO_ID                                         
+      MOVE FILE_PHYSICIAN_CD TO PHY_PHYSICIAN_CD                                
+      EXEC SQL                                                                  
+         SELECT  CO_ID,                                                         
+                 PHYSICIAN_CD,                                                  
+                 FULL_NAME                                                      
+         INTO   :PHY_CO_ID,                                                     
+                :PHY_PHYSICIAN_CD,                                              
+                :PHY_FULL_NAME                                                  
+         FROM MRTEST.MRBPHY                                                     
+         WHERE                                                                  
+                CO_ID =:PHY_CO_ID AND                                           
+               PHYSICIAN_CD=:PHY_PHYSICIAN_CD                                   
+      ENDEXEC                                                                   
+                                                                                
+            WS_TOTAL_PAT   = WS_TOTAL_PAT + 1                                   
+            PRINT ' TOTAL PAT IN PBL DATABASE '                                 
+                                                                                
+      IF DYLSQLCODE EQ 0                                                        
+               PRINT 'PAT FOUND IN PBL DATABASE'                                
+               WS_FOUND_PAT =  WS_FOUND_PAT + 1                                 
+                                                                                
+               MOVE PHY_CO_ID   TO  FND_COID                                    
+               MOVE FND_PHYSICIAN_CD TO FND_PHYSICIAN_CD                        
+                                                                                
+               WRITE FNDFILE                                                    
+                                                                                
+      ENDIF                                                                     
+      IF DYLSQLCODE EQ 100                                                      
+              WS_NOTFOUND_PAT  =  WS_NOTFOUND_PAT + 1                           
+                                                                                
+               PRINT ' NOT- AT FOUND IN PBL DATABASE'                           
+                                                                                
+               MOVE PHY_CO_ID   TO       NOTF_COID                              
+               MOVE PHY_PHYSICIAN_CD TO  NOTF_PHYSICIAN_CD                      
+               MOVE PHY_FULL_NAME    TO  NOTF_FULL_NAME                         
+                                                                                
+         WRITE OUTFILE                                                          
+      ENDIF                                                                     
+                                                                                
+                                                                                
+**************                                                                  
+ XITPROC:                                                                       
+*                                                                               
+************************************************************************        
+*                                                                               
+ON FINAL                                                                        
+     LIST ' TOTAL PAT          :  ' WS_TOTAL_PAT                                
+     LIST ' TOTAL FOUND PAT    : ' WS_FOUND_PAT                                 
+     LIST ' TOTAL NOT FOUND PAT: ' WS_NOTFOUND_PAT                              
+     LIST ' PROGRAM EXECUTE SUCCESSFULLY '                                      
+FIN                                                                             
+//*                                                                             

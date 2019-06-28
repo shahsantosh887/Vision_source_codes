@@ -1,0 +1,221 @@
+//LYI6892Z JOB (0844,00000000),'BILL TYPE',                             J0055212
+//             CLASS=T,PRTY=15,                                         00020000
+//             REGION=0K,                                               00030000
+//             MSGCLASS=X,                                              00040000
+//             NOTIFY=LYI6892                                           00050000
+//JOBLIB   DD DSN=SYSTEST.LOADLIB,                                      00060000
+//            DISP=SHR                                                  00070000
+//********************************************************************* 00080000
+//* STEP TO CHECK PAT FROM MRBPBL TABLE USING GIVEN FILE                00090000
+//********************************************************************* 00100000
+//STEP010  EXEC PGM=DYL280,COND=(0,NE),                                 00110000
+//             REGION=0K                                                00120000
+//STEPLIB  DD  DSN=VISIONR.DB2DYN.LOAD,DISP=SHR                         00130000
+//         DD  DSN=VISIONR.LOAD.LIBRARY,DISP=SHR                        00140000
+//         DD  DSN=DGT1X.SDSNEXIT,DISP=SHR                              00150000
+//         DD  DSN=DSNTEST.SDSNLOAD,DISP=SHR                            00160000
+//SYS004   DD  UNIT=SYSDA,                                              00170000
+//             SPACE=(TRK,(4,4))                                        00180000
+//DYLDBUG  DD  SYSOUT=*                                                 00190000
+//SYSPRINT DD  SYSOUT=*                                                 00200000
+//SYS280R  DD  SYSOUT=*                                                 00210000
+//SYSOUT   DD  SYSOUT=*                                                 00220000
+//SYSCOPY  DD  DSN=PROD.COPYLIB,                                        00230000
+//             DISP=SHR                                                 00240000
+//         DD  DSN=DB2PROD.DCLGEN,                                      00250000
+//             DISP=SHR                                                 00260000
+//FILEIN   DD DSN=TEST.LIF.C16910.BILLTYPE.DT0928,DISP=SHR              00270002
+//FILEOUT  DD DSN=LYI6892.LIF.C16910.BILLTYPE.DT0928.NF,                00290000
+//         DISP=(NEW,CATLG,DELETE),                                     00300000
+//         UNIT=SYSDA,                                                  00310000
+//         SPACE=(CYL,(10,4),RLSE),                                     00320000
+//         AVGREC=M,                                                    00330000
+//         RECFM=FB,                                                    00340000
+//         LRECL=80,                                                    00350000
+//         BLKSIZE=0                                                    00360000
+//FILEOUT1 DD DSN=LYI6892.LIF.C16910.BILLTYPE.DT0928.MATCH,             00370000
+//         DISP=(NEW,CATLG,DELETE),                                     00380000
+//         UNIT=SYSDA,                                                  00390000
+//         SPACE=(CYL,(10,4),RLSE),                                     00400000
+//         AVGREC=M,                                                    00410000
+//         RECFM=FB,                                                    00420000
+//         LRECL=80,                                                    00430000
+//         BLKSIZE=0                                                    00440000
+//FILEOUT2 DD DSN=LYI6892.LIF.C16910.BILLTYPE.DT0928.UMATCH,            00450000
+//         DISP=(NEW,CATLG,DELETE),                                     00460000
+//         UNIT=SYSDA,                                                  00470000
+//         SPACE=(CYL,(10,4),RLSE),                                     00480000
+//         AVGREC=M,                                                    00490000
+//         RECFM=FB,                                                    00500000
+//         LRECL=80,                                                    00510000
+//         BLKSIZE=0                                                    00520000
+//SYSIN    DD *                                                         00530000
+  OPTION STRUCTURED2 TSIZE 264K                                         00540000
+   REPORT 80 WIDE 3 BETWEEN                                             00550000
+                                                                        00560000
+  FILE FILEIN FB 240  STATUS ENDINPT                                    00570000
+   FILEIN_REC 240                                                       00580000
+   REDEFINE FILEIN_REC                                                  00590000
+   WS_COID_ID_FL      05                                                00600000
+   FILLER             01                                                00610000
+   WS_PAT_NO_FL       09                                                00620000
+   FILLER             01                                                00630000
+   WS_UB04_BILL_TYPE_FL  04                                             00640000
+   FILLER             220                                               00650000
+                                                                        00680000
+  FILE FILEOUT FB  80 OUTPUT FROM FILEOUT                               00690000
+       OUTPUT_REC  80                                                   00700000
+                                                                        00710000
+  WORKAREA                                                              00720000
+                                                                        00730000
+    WS_OUTPUT                80                                         00740000
+    REDEFINE    WS_OUTPUT                                               00750000
+      WS_CO_ID               05                                         00760000
+      WS_PAT_NO              09                                         00770000
+      WS_UB04_BILL_TYPE      04                                         00780002
+      FILLER                 62                                         00790002
+                                                                        00800000
+  FILE FILEOUT1 FB  80 OUTPUT FROM FILEOUT1                             00810000
+       OUTPUT_REC1  80                                                  00820000
+                                                                        00830000
+  WORKAREA                                                              00840000
+                                                                        00850000
+    WS_OUTPUT1               80                                         00860000
+    REDEFINE    WS_OUTPUT1                                              00870000
+      WS_CO_ID1              05                                         00880000
+      FILLER                 01                                                 
+      WS_PAT_NO1             09                                         00890000
+      FILLER                 01                                                 
+      WS_UB04_BILL_TYPE_FF1  04                                         00900002
+      FILLER                 01                                                 
+      WS_UB04_BILL_TYPE_FD1  04                                         00910002
+      FILLER                 55                                         00920002
+                                                                        00930000
+  FILE FILEOUT2 FB  80 OUTPUT FROM FILEOUT2                             00940000
+       OUTPUT_REC2  80                                                  00950000
+                                                                        00960000
+  WORKAREA                                                              00970000
+                                                                        00980000
+    WS_OUTPUT2               80                                         00990000
+    REDEFINE    WS_OUTPUT2                                              01000000
+      WS_CO_ID2              05                                         01010000
+      FILLER                 01                                                 
+      WS_PAT_NO2             09                                         01020000
+      FILLER                 01                                                 
+      WS_UB04_BILL_TYPE_FF2  04                                         01030002
+      FILLER                 01                                                 
+      WS_UB04_BILL_TYPE_FD2  04                                         01040002
+      FILLER                 55                                         01050002
+                                                                        01060000
+*************************************                                   01070000
+ WORKAREA                                                               01080000
+*************************************                                   01090000
+   COPY MRBPBL COBOL                                                    01100000
+   COPY MRBPAT COBOL                                                    01110000
+ WS_TOTAL_PAT      07 NU  VALUE 0                                               
+ WS_FOUND_PAT      07 NU  VALUE 0                                               
+ WS_NOTFOUND_PAT   07 NU  VALUE 0                                               
+STATEON                                                                 01120000
+   WS_COID               05 CH                                          01130000
+   WS_PAT_NUM            12 CH                                          01140000
+   WS_SQL                05 NU 1 Y VALUE 0 REINIT                               
+*********************************************************************** 01150000
+*  COBOL COPY BOOKS                                                     01160000
+*********************************************************************** 01170000
+  MAINLINE:                                                             01180000
+                                                                        01190000
+  EXEC SQL                                                              01200000
+    WHENEVER SQLERROR                                                   01210000
+    CONTINUE                                                            01220000
+  ENDEXEC                                                               01230000
+********************************************************************    01240000
+      READ FILEIN                                                       01250000
+      IF ENDINPT EQ 'E'                                                 01260000
+         STOP                                                           01270000
+      ELSE                                                              01280000
+         WS_TOTAL_PAT   = WS_TOTAL_PAT + 1                                      
+         MOVE WS_PAT_NO_FL TO PBL_PAT_NO                                01290000
+                                                                                
+          EXEC SQL                                                      01310000
+            SELECT  CO_ID,                                              01320000
+                 PAT_NO,                                                01330000
+                 UB04_BILL_TYPE                                                 
+            INTO   :PBL_CO_ID,                                          01360000
+                   :PBL_PAT_NO,                                         01370000
+                   :PBL_UB04_BILL_TYPE,                                 01370000
+            FROM MRTEST.MRBPBL                                          01400000
+            WHERE  CO_CD = 'A'                                          01410000
+              AND  CO_ID IN (16910,16911,16912)                         01420000
+             AND  PAT_NO = :PBL_PAT_NO                                  01430000
+          ENDEXEC                                                       01440000
+                                                                                
+          IF DYLSQLCODE EQ 0                                            01450000
+             WS_FOUND_PAT =  WS_FOUND_PAT + 1                                   
+               IF WS_UB04_BILL_TYPE_FL EQ PBL_UB04_BILL_TYPE            01460002
+                  MOVE PBL_CO_ID        TO WS_CO_ID1                    01480000
+                  MOVE PBL_PAT_NO       TO WS_PAT_NO1                   01490000
+                  MOVE WS_UB04_BILL_TYPE_FL TO WS_UB04_BILL_TYPE_FF1    01500002
+                  MOVE PBL_UB04_BILL_TYPE TO WS_UB04_BILL_TYPE_FD1      01510002
+                  MOVE WS_OUTPUT1 TO OUTPUT_REC1                        01520000
+                  WRITE FILEOUT1                                        01530000
+                  GOTO MAINLINE                                                 
+                                                                                
+               ELSE                                                     01540000
+                  MOVE PBL_CO_ID        TO WS_CO_ID2                    01550002
+                  MOVE PBL_PAT_NO       TO WS_PAT_NO2                   01560002
+                  MOVE WS_UB04_BILL_TYPE_FL TO WS_UB04_BILL_TYPE_FF2    01570002
+                  MOVE PBL_UB04_BILL_TYPE TO WS_UB04_BILL_TYPE_FD2      01580002
+                  MOVE WS_OUTPUT2 TO OUTPUT_REC2                        01590002
+                  WRITE FILEOUT2                                        01600002
+                                                                                
+                  MOVE WS_UB04_BILL_TYPE_FL TO PBL_UB04_BILL_TYPE               
+               EXEC SQL                                                         
+                  UPDATE  MRTEST.MRBPBL                                         
+                  SET UB04_BILL_TYPE = :PBL_UB04_BILL_TYPE                      
+               WHERE   CO_CD   = 'A'                                            
+                  AND  CO_ID   = :PBL_CO_ID                                     
+                  AND  PAT_NO  = :PBL_PAT_NO                                    
+               ENDEXEC                                                          
+               IF DYLSQLCODE EQ 0                                       01450000
+                  GOTO MAINLINE                                                 
+               ELSE                                                             
+                  MOVE 0500 TO DYLRETURN                                        
+                  WS_SQL = DYLSQLCODE                                           
+                  PRINT 'BAD UPDATE FOR MRBPBL'                                 
+                  DYLSQLSTAT '  DYSQLCODE: ' WS_SQL                             
+                  PRINT 'JOB TERMINATED!!!'                                     
+                  STOP                                                          
+               ENDIF                                                            
+            ENDIF                                                       01610000
+        ENDIF                                                           01610000
+        IF DYLSQLCODE EQ 100                                            01630000
+           WS_NOTFOUND_PAT  =  WS_NOTFOUND_PAT + 1                              
+               PRINT ' NOT FOUND IN PBL DATABASE'                               
+                                                                                
+           MOVE PBL_CO_ID        TO WS_CO_ID                            01640000
+           MOVE PBL_PAT_NO       TO WS_PAT_NO                           01650000
+           MOVE WS_UB04_BILL_TYPE_FL TO WS_UB04_BILL_TYPE               01660002
+           MOVE WS_OUTPUT TO OUTPUT_REC                                 01670000
+         WRITE FILEOUT                                                  01680000
+        ELSE                                                                    
+           MOVE 0500 TO DYLRETURN                                               
+           WS_SQL = DYLSQLCODE                                                  
+           PRINT 'BAD READ FOR MRBPBL'                                          
+           DYLSQLSTAT '  DYSQLCODE: ' WS_SQL                                    
+           PRINT 'JOB TERMINATED!!!'                                            
+           STOP                                                                 
+        ENDIF                                                           01690000
+      ENDIF                                                             01700000
+      GOTO MAINLINE                                                     01710000
+      ON END OF INPUT                                                   01720000
+      STOP                                                              01730000
+*********************************************************************           
+*                                                                               
+ON FINAL                                                                        
+     LIST ' TOTAL PAT          :  ' WS_TOTAL_PAT                                
+     LIST ' TOTAL PAT FOUND    : ' WS_FOUND_PAT                                 
+     LIST ' TOTAL PAT NOT FOUND : ' WS_NOTFOUND_PAT                             
+     LIST ' PROGRAM EXECUTE SUCCESSFULLY '                                      
+FIN                                                                             
+/*                                                                      01740000
+//*--------------------------------------------------------------------*01770000

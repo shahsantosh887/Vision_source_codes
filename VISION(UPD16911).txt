@@ -1,0 +1,366 @@
+//LYI6892Z JOB (0844,00000000),'REC0102 CUTION- XXX ',                  J0046389
+//             CLASS=T,PRTY=15,                                         00010100
+//             REGION=0K,                                               00010200
+//             MSGCLASS=X,                                              00011000
+//             NOTIFY=LYI6892                                           00020000
+//*OWNER KUMAR, MAHESH        N/A      N/A                                      
+//************************************************************          00140000
+//JOBLIB    DD DSN=PROD.LOADLIB,DISP=SHR                                00150000
+//          DD DSN=DGT1X.SDSNEXIT,DISP=SHR                              00160000
+//          DD DSN=DSNTEST.SDSNLOAD,DISP=SHR                            00170000
+//********************************************************************* 00180000
+//*                                                                     00190000
+//********************************************************************* 00200000
+//STEP003  EXEC PGM=DYL280,REGION=1024K                                 00210000
+//STEPLIB  DD DSN=VISIONR.DB2DYN.LOAD,DISP=SHR                          00220000
+//         DD DSN=VISIONR.LOAD.LIBRARY,DISP=SHR                         00230000
+//         DD DSN=DGT1X.SDSNEXIT,DISP=SHR       <--- DB2 SDSNEXIT       00240000
+//         DD DSN=DSNTEST.SDSNLOAD,DISP=SHR                             00250000
+//SYSCOPY  DD DSN=DB2PROD.DCLGEN,DISP=SHR                               00260000
+//SYSPRINT DD SYSOUT=*                                                  00270000
+//SYS280R  DD SYSOUT=*                                                  00280000
+//DYLDBUG  DD SYSOUT=*                                                  00290000
+//*ILEIN   DD DSN=TEST.LIF.C16911.REC1N.PULL.KEY,DISP=SHR               00300000
+//FILEIN   DD DSN=TESTMR.REC01.REC02.DT0922.U16910.FINAL.KEY,DISP=SHR   00301000
+//SYS004   DD UNIT=SYSDA,SPACE=(TRK,(5,5))                              00310000
+//SYSIN    DD *                                                         00320000
+ ;                                                                      00330000
+ ;                                                                      00340000
+*****************************************************************       00350000
+ OPTION STRUCTURED2 TSIZE 32K                                           00360000
+  REPORT 80 WIDE 3 BETWEEN                                              00370000
+                                                                        00380000
+  FILE FILEIN   FB  80 STATUS ENDSTAT1                                  00390000
+    FI_REC                  80 CH                                       00400000
+    REDEFINE FI_REC                                                     00410000
+      FI_CO_CD               01 CH                                      00420000
+      FILLER                 01 CH                                      00430000
+      FI_CO_ID               05 CH                                      00440000
+      FILLER                 01 CH                                      00450000
+      FI_BILL_GEN_DT         10 CH                                      00460000
+      FILLER                 01 CH                                      00470000
+      FI_PAT_TYPE            03 CH                                      00480000
+      FILLER                 01 CH                                      00490000
+      FI_PAT_NO              12 CH                                      00500000
+      FILLER                 01 CH                                      00510000
+      FI_PAT_SEQ             04 CH                                      00520000
+      FILLER                 01 CH                                      00530000
+      FI_SRC_OF_ADMIT        01 NU                                      00540000
+      FILLER                 01 CH                                      00550000
+      FI_ADMIT_DX_CD_I10     07 CH                                      00560000
+      FILLER                 30 CH                                      00570000
+                                                                        00580000
+                                                                        00590000
+*****************************************************************       00600000
+STATEON                                                                 00610000
+**********************                                                  00620000
+WORKAREA                                                                00630000
+**********************                                                  00640000
+   WS_CO_CD                 01 CH                                       00650000
+   WS_CO_ID                 05 CH                                       00660000
+   WS_BILL_GEN_DT           10 CH                                       00670000
+   WS_PAT_TYPE              03 CH                                       00680000
+   WS_PAT_NO                12 CH                                       00690000
+   WS_PAT_SEQ               04 CH                                       00700000
+   WS_SRC_OF_ADMIT          01 CH                                       00710000
+   WS_ADMIT_DX_CD_I10       07 CH                                       00720000
+                                                                        00730000
+  WS_PBL_CO_CD              01 CH                                       00740000
+  WS_PBL_CO_ID              05 PD                                       00750000
+  WS_PBL_PAT_NO             12 PD                                       00760000
+  WS_PBL_PAT_SEQ            04 PD                                       00770000
+  WS_PBL_SRC_OF_ADMIT       01 CH                                       00780000
+  WS_PBL_ADMIT_DX_CD_I10    07 CH                                       00790000
+  WS_TOT_REC                07 PD                                       00800000
+  WS_COUNTER                07 NU  VALUE 0                              00810000
+  WS_TOT_PAT_FND_NOT_UPD    07 NU  VALUE 0                              00820000
+  WS_TOT_PBL_UPD_CNT        07 NU  VALUE 0                              00830000
+  WS_TOT_PAT                07 NU  VALUE 0                              00840000
+  WS_TOT_PAT_NOT_FOUND      07 NU  VALUE 0                              00850000
+                                                                        00860000
+*----------                                                             00870000
+ DCLCRPARA:                                                             00880000
+*----------                                                             00890000
+ EXEC SQL                                                               00900000
+    DECLARE MRBPBL1 CURSOR WITH HOLD FOR                                00910000
+    SELECT CO_ID                                                        00920000
+          ,PAT_NO                                                       00930000
+          ,SRC_OF_ADMIT                                                 00940000
+    FROM MRTEST.MRBPBL                                                  00950000
+    WHERE CO_CD       = :WS_CO_CD                                       00960000
+      AND CO_ID       = :WS_CO_ID                                       00970000
+      AND BILL_GEN_DT = :WS_BILL_GEN_DT                                 00980000
+      AND PAT_TYPE    = :WS_PAT_TYPE                                    00990000
+      AND PAT_NO      = :WS_PAT_NO                                      01000000
+      AND PAT_SEQ     = :WS_PAT_SEQ                                     01010000
+    FOR UPDATE OF SRC_OF_ADMIT                                          01020000
+ ENDEXEC                                                                01030000
+     IF DYLSQLSTAT EQ 'Y' OR DYLSQLCODE EQ 0                            01040000
+       PRINT 'CURSOR MRBPBL1 DECLARED'                                  01050000
+     ELSE                                                               01060000
+       PRINT 'CURSOR MRBPBL1 DECLARE FAILED'                            01070000
+       PERFORM STOPPARA                                                 01080000
+     ENDIF                                                              01090000
+                                                                        01100000
+                                                                        01110000
+*----------                                                             01120000
+ DCLCRPARA1:                                                            01130000
+*----------                                                             01140000
+ EXEC SQL                                                               01150000
+    DECLARE MRBPAT1 CURSOR WITH HOLD FOR                                01160000
+    SELECT CO_ID                                                        01170000
+          ,PAT_NO                                                       01180000
+          ,ADMIT_DX_CD_I10                                              01190000
+    FROM MRTEST.MRBPAT                                                  01200000
+    WHERE CO_CD       = :WS_CO_CD                                       01210000
+      AND CO_ID       = :WS_CO_ID                                       01220000
+      AND PAT_NO      = :WS_PAT_NO                                      01230000
+      AND PAT_SEQ     = :WS_PAT_SEQ                                     01240000
+    FOR UPDATE OF ADMIT_DX_CD_I10                                       01250000
+ ENDEXEC                                                                01260000
+     IF DYLSQLSTAT EQ 'Y' OR DYLSQLCODE EQ 0                            01270000
+       PRINT 'CURSOR MRBPAT1 DECLARED'                                  01280000
+     ELSE                                                               01290000
+       PRINT 'CURSOR MRBPAT1 DECLARE FAILED'                            01300000
+       PERFORM STOPPARA                                                 01310000
+     ENDIF                                                              01320000
+                                                                        01330000
+********************************************************************    01340000
+ MAINLINE:                                                              01350000
+********************************************************************    01360000
+  EXEC SQL                                                              01370000
+    WHENEVER SQLERROR                                                   01380000
+    CONTINUE                                                            01390000
+  ENDEXEC                                                               01400000
+                                                                        01410000
+*-----------------------------------------------                        01420000
+  READ FILEIN                                                           01430000
+  IF ENDSTAT1 EQ 'E'                                                    01440000
+     GOTO STOPPARA                                                      01450000
+  ELSE                                                                  01460000
+     WS_TOT_PAT  = WS_TOT_PAT   +   1                                   01470000
+     MOVE    FI_CO_CD           TO  WS_CO_CD                            01480000
+     MOVE    FI_CO_ID           TO  WS_CO_ID                            01490000
+     MOVE    FI_BILL_GEN_DT     TO  WS_BILL_GEN_DT                      01500000
+     MOVE    FI_PAT_TYPE        TO  WS_PAT_TYPE                         01510000
+     MOVE    FI_PAT_NO          TO  WS_PAT_NO                           01520000
+     MOVE    FI_PAT_SEQ         TO  WS_PAT_SEQ                          01530000
+     MOVE    FI_SRC_OF_ADMIT    TO  WS_SRC_OF_ADMIT                     01540000
+     MOVE    FI_ADMIT_DX_CD_I10 TO  WS_ADMIT_DX_CD_I10                  01550000
+     PERFORM OPNCRPARA          TO  EXTOPN                              01560000
+     PERFORM FETCHPARA          TO  EXTFTH                              01570000
+     PERFORM CLOSEPARA          TO  EXTCLS                              01580000
+  ENDIF                                                                 01590000
+                                                                        01600000
+  GOTO MAINLINE                                                         01610000
+  ON END OF INPUT                                                       01620000
+     GOTO STOPPARA                                                      01630000
+                                                                        01640000
+                                                                        01650000
+*----------                                                             01660000
+ OPNCRPARA:                                                             01670000
+*----------                                                             01680000
+ EXEC SQL                                                               01690000
+   OPEN MRBPBL1                                                         01700000
+ ENDEXEC                                                                01710000
+     IF DYLSQLSTAT EQ 'Y' OR DYLSQLCODE EQ 0                            01720000
+       PRINT 'CURSOR MRBPBL1 OPENED'                                    01730000
+     ELSE                                                               01740000
+       PRINT 'CURSOR MRBPBL1 OPEN FAILED'                               01750000
+       PERFORM STOPPARA                                                 01760000
+     ENDIF                                                              01770000
+                                                                        01780000
+                                                                        01790000
+*----------                                                             01800000
+ OPNCRPARA1:                                                            01810000
+*----------                                                             01820000
+ EXEC SQL                                                               01830000
+   OPEN MRBPAT1                                                         01840000
+ ENDEXEC                                                                01850000
+     IF DYLSQLSTAT EQ 'Y' OR DYLSQLCODE EQ 0                            01860000
+       PRINT 'CURSOR MRBPAT1 OPENED'                                    01870000
+     ELSE                                                               01880000
+       PRINT 'CURSOR MRBPAT1 OPEN FAILED'                               01890000
+       PERFORM STOPPARA                                                 01900000
+     ENDIF                                                              01910000
+*-------                                                                01920000
+ EXTOPN:                                                                01930000
+*-------                                                                01940000
+                                                                        01950000
+*----------                                                             01960000
+ FETCHPARA:                                                             01970000
+*----------                                                             01980000
+   EXEC SQL                                                             01990000
+     FETCH MRBPBL1 INTO                                                 02000000
+        :WS_PBL_CO_ID,                                                  02010000
+        :WS_PBL_PAT_NO,                                                 02020000
+        :WS_PBL_SRC_OF_ADMIT                                            02030000
+   ENDEXEC                                                              02040000
+                                                                        02050000
+   IF DYLSQLSTAT EQ 'Y'   OR  DYLSQLCODE EQ 0                           02060000
+         PERFORM  UPDPBLPRA     TO  EXTPBLUPD                           02070000
+                                                                        02080000
+   ELSE                                                                 02090000
+      WS_TOT_PAT_NOT_FOUND   = WS_TOT_PAT_NOT_FOUND + 1                 02100000
+      PRINT 'END OF CURSOR FETCH'                                       02110000
+   ENDIF                                                                02120000
+                                                                        02130000
+                                                                        02140000
+   EXEC SQL                                                             02150000
+     FETCH MRBPAT1 INTO                                                 02160000
+        :WS_PBL_CO_ID,                                                  02170000
+        :WS_PBL_PAT_NO,                                                 02180000
+        :WS_ADMIT_DX_CD_I10                                             02190000
+   ENDEXEC                                                              02200000
+                                                                        02210000
+   IF DYLSQLSTAT EQ 'Y'   OR  DYLSQLCODE EQ 0                           02220000
+         PERFORM  UPDPATPRA     TO  EXTPATUPD                           02230000
+                                                                        02240000
+   ELSE                                                                 02250000
+      WS_TOT_PAT_NOT_FOUND   = WS_TOT_PAT_NOT_FOUND + 1                 02260000
+      PRINT 'END OF CURSOR FETCH'                                       02270000
+   ENDIF                                                                02280000
+*-------                                                                02290000
+ EXTFTH:                                                                02300000
+*-------                                                                02310000
+                                                                        02320000
+                                                                        02330000
+                                                                        02340000
+*-------                                                                02350000
+ EXTFDU:                                                                02360000
+*-------                                                                02370000
+                                                                        02380000
+                                                                        02390000
+                                                                        02400000
+*-------                                                                02410000
+ EXTFDN:                                                                02420000
+*-------                                                                02430000
+                                                                        02440000
+                                                                        02450000
+*-------                                                                02460000
+ EXTNOT:                                                                02470000
+*-------                                                                02480000
+                                                                        02490000
+                                                                        02500000
+*----------                                                             02510000
+ CLOSEPARA:                                                             02520000
+*----------                                                             02530000
+ EXEC SQL                                                               02540000
+   CLOSE MRBPBL1                                                        02550000
+ ENDEXEC                                                                02560000
+  IF DYLSQLSTAT EQ 'Y' OR DYLSQLCODE EQ 0                               02570000
+    PRINT 'CURSOR MRBPBL1 CLOSED'                                       02580000
+    PERFORM STOPPARA                                                    02590000
+  ELSE                                                                  02600000
+    PRINT 'CURSOR MRBPBL1 CLOSE FAILED'                                 02610000
+    PERFORM STOPPARA                                                    02620000
+  ENDIF                                                                 02630000
+                                                                        02640000
+                                                                        02650000
+*----------                                                             02660000
+ CLOSEPARA1:                                                            02670000
+*----------                                                             02680000
+ EXEC SQL                                                               02690000
+   CLOSE MRBPAT1                                                        02700000
+ ENDEXEC                                                                02710000
+  IF DYLSQLSTAT EQ 'Y' OR DYLSQLCODE EQ 0                               02720000
+    PRINT 'CURSOR MRBPAT1 CLOSED'                                       02730000
+    PERFORM STOPPARA                                                    02740000
+  ELSE                                                                  02750000
+    PRINT 'CURSOR MRBPAT1 CLOSE FAILED'                                 02760000
+    PERFORM STOPPARA                                                    02770000
+  ENDIF                                                                 02780000
+                                                                        02790000
+*-------                                                                02800000
+ EXTCLS:                                                                02810000
+*-------                                                                02820000
+                                                                        02830000
+*----------                                                             02840000
+ UPDPBLPRA:                                                             02850000
+*----------                                                             02860000
+     PRINT 'UPDATE PBL***'                                              02870000
+ EXEC SQL                                                               02880000
+  UPDATE MRTEST.MRBPBL                                                  02890000
+   SET SRC_OF_ADMIT  = :WS_SRC_OF_ADMIT                                 02900000
+   WHERE CURRENT OF MRBPBL1                                             02910000
+ ENDEXEC                                                                02920000
+  IF DYLSQLSTAT EQ 'Y' OR DYLSQLCODE EQ 0                               02930000
+     WS_TOT_PBL_UPD_CNT = WS_TOT_PBL_UPD_CNT + 1                        02940000
+     WS_COUNTER = WS_COUNTER + 1                                        02950000
+     PERFORM COMMITPARA TO EXTCOMT                                      02960000
+  ELSE                                                                  02970000
+     PRINT 'UPDATE PBL UNSUCCESSFUL'                                    02980000
+     PERFORM STOPPARA                                                   02990000
+  ENDIF                                                                 03000000
+                                                                        03010000
+*----------                                                             03020000
+ EXTPBLUPD:                                                             03030000
+*----------                                                             03040000
+                                                                        03050000
+                                                                        03060000
+*----------                                                             03070000
+ UPDPATPRA:                                                             03080000
+*----------                                                             03090000
+     PRINT 'UPDATE PAT***'                                              03100000
+ EXEC SQL                                                               03110000
+  UPDATE MRTEST.MRBPAT                                                  03120000
+   SET ADMIT_DX_CD_I10 = :WS_ADMIT_DX_CD_I10                            03130000
+   WHERE CURRENT OF MRBPAT1                                             03140000
+ ENDEXEC                                                                03150000
+  IF DYLSQLSTAT EQ 'Y' OR DYLSQLCODE EQ 0                               03160000
+     PERFORM COMMITPARA TO EXTCOMT                                      03170000
+  ELSE                                                                  03180000
+     PRINT 'UPDATE PAT UNSUCCESSFUL'                                    03190000
+     PERFORM STOPPARA                                                   03200000
+  ENDIF                                                                 03210000
+                                                                        03220000
+*----------                                                             03230000
+ EXTPATUPD:                                                             03240000
+*----------                                                             03250000
+                                                                        03260000
+                                                                        03270000
+*-----------                                                            03280000
+ COMMITPARA:                                                            03290000
+*-----------                                                            03300000
+ IF WS_COUNTER EQ 1000                                                  03310000
+ EXEC SQL                                                               03320000
+    COMMIT WORK                                                         03330000
+ ENDEXEC                                                                03340000
+  IF DYLSQLSTAT EQ 'Y' OR DYLSQLCODE EQ 0                               03350000
+     PRINT 'UPDATE COMMITED SUCCESSFULLY'                               03360000
+     MOVE 0 TO WS_COUNTER                                               03370000
+  ELSE                                                                  03380000
+     PRINT 'UPDATE PAT UNSUCCESSFUL'                                    03390000
+    PERFORM STOPPARA                                                    03400000
+  ENDIF                                                                 03410000
+ ENDIF                                                                  03420000
+                                                                        03430000
+                                                                        03440000
+ IF WS_COUNTER EQ 1000                                                  03450000
+ EXEC SQL                                                               03460000
+    COMMIT WORK                                                         03470000
+ ENDEXEC                                                                03480000
+  IF DYLSQLSTAT EQ 'Y' OR DYLSQLCODE EQ 0                               03490000
+     PRINT 'UPDATE COMMITED SUCCESSFULLY'                               03500000
+     MOVE 0 TO WS_COUNTER                                               03510000
+  ELSE                                                                  03520000
+     PRINT 'UPDATE PAT UNSUCCESSFUL'                                    03530000
+    PERFORM STOPPARA                                                    03540000
+  ENDIF                                                                 03550000
+ ENDIF                                                                  03560000
+                                                                        03570000
+*--------                                                               03580000
+ EXTCOMT:                                                               03590000
+*--------                                                               03600000
+                                                                        03610000
+*---------                                                              03620000
+ STOPPARA:                                                              03630000
+*---------                                                              03640000
+      PRINT 'TOTAL RECORD                = ' WS_TOT_PAT                 03650000
+      PRINT 'TOTAL RECORD FND & NOT UPD  = ' WS_TOT_PAT_FND_NOT_UPD     03660000
+      PRINT 'TOTAL RECORD UPDATED MRBPBL = ' WS_TOT_PBL_UPD_CNT         03670000
+      PRINT 'TOTAL RECORD NOT FOUND      = ' WS_TOT_PAT_NOT_FOUND       03680000
+      PRINT 'TOTAL RECORD FOR COMMIT     = ' WS_COUNTER                 03690000
+ STOP                                                                   03700000
+                                                                        03710000
+//*                                                                     03720000

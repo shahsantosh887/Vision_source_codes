@@ -1,0 +1,107 @@
+ OPTION NOXREF STRUCTURED2 TSIZE 36K QUALIFIERS TIMECOLON                       
+ REPORT  133 WIDE 1 BETWEEN ASA                                                 
+                                                                                
+ FILE PATFILE    FB 12   STATUS CC_EOF                                          
+  PATFILE_REC    12                                                             
+                                                                                
+  REDEFINE PATFILE_REC                                                          
+   PATIENT_NO          12                                                       
+                                                                                
+ FILE OUTFILE FB 240 OUTPUT FROM OUTFILE                                        
+ OUTFILE_REC          240 CH                                                    
+ REDEFINE OUTFILE_REC                                                           
+ OP_PATIENT_NO    12                                                            
+                                                                                
+ FILE FNDFILE FB 42 OUTPUT FROM FNDFILE                                         
+ FOUND_REC           42 CH                                                      
+ REDEFINE FOUND_REC                                                             
+ FD_CO_CD         01                                                            
+ FD_HOSP_NO       05                                                            
+ FD_PATIENT_NO    12                                                            
+ FD_ATT_DOC       04                                                            
+ FD_BILL_GEN_DT   10                                                            
+ FD_ENTERED_DATE  10                                                            
+                                                                                
+ WORKAREA                                                                       
+   COPY MRBPBL COBOL                                                            
+                                                                                
+                                                                                
+                                                                                
+ WS_TOTAL_PAT      07 NU  VALUE 0                                               
+ WS_FOUND_PAT      07 NU  VALUE 0                                               
+ WS_NOTFOUND_PAT   07 NU  VALUE 0                                               
+*                                                                               
+************************************************************************        
+ BEGIN:                                                                         
+************************************************************************        
+                                                                                
+ READ PATFILE                                                                   
+                                                                                
+                                                                                
+ IF CC_EOF  EQ 'E'                                                              
+     PRINT 'FILE ENDED '                                                        
+           DYLDATE ' ' DYLETIME                                                 
+     GOTO XITBEGIN                                                              
+ ELSE                                                                           
+     PERFORM PROC TO XITPROC                                                    
+     GOTO BEGIN                                                                 
+ ENDIF                                                                          
+                                                                                
+*********************                                                           
+ XITBEGIN:                                                                      
+ STOP                                                                           
+*                                                                               
+************************************************************************        
+ PROC:                                                                          
+*************                                                                   
+      MOVE PATIENT_NO    TO    PBL_PAT_NO                                       
+                                                                                
+      EXEC SQL                                                                  
+         SELECT  CO_ID,                                                         
+                 PAT_NO,                                                        
+                 ATT_DOC_NO                                                     
+         INTO   :PBL_CO_ID,                                                     
+                :PBL_PAT_NO,                                                    
+                :PBL_ATT_DOC_NO                                                 
+         FROM MRTEST.MRBPBL                                                     
+         WHERE  CO_CD = 'A'                                                     
+           AND  CO_ID IN(16365)                                                 
+           AND  PAT_NO = :PBL_PAT_NO                                            
+      ENDEXEC                                                                   
+                                                                                
+            WS_TOTAL_PAT   = WS_TOTAL_PAT + 1                                   
+            PRINT ' TOTAL PAT IN PBL DATABASE '                                 
+                                                                                
+      IF DYLSQLCODE EQ 0                                                        
+               PRINT 'PAT FOUND IN PBL DATABASE'                                
+               WS_FOUND_PAT =  WS_FOUND_PAT + 1                                 
+                                                                                
+               MOVE 'A'         TO FD_CO_CD                                     
+               MOVE PBL_CO_ID   TO  FD_CO_CD                                    
+               MOVE PBL_PAT_NO   TO FD_HOSP_NO                                  
+               MOVE PBL_ATT_DOC_NO TO FD_ATT_DOC                                
+               WRITE FNDFILE                                                    
+                                                                                
+      ENDIF                                                                     
+      IF DYLSQLCODE EQ 100                                                      
+              WS_NOTFOUND_PAT  =  WS_NOTFOUND_PAT + 1                           
+                                                                                
+               PRINT ' NOT- AT FOUND IN PBL DATABASE'                           
+                                                                                
+           MOVE PBL_PAT_NO   TO    OP_PATIENT_NO                                
+         WRITE OUTFILE                                                          
+      ENDIF                                                                     
+                                                                                
+                                                                                
+**************                                                                  
+ XITPROC:                                                                       
+*                                                                               
+************************************************************************        
+*                                                                               
+ON FINAL                                                                        
+     LIST ' TOTAL PAT          :  ' WS_TOTAL_PAT                                
+     LIST ' TOTAL FOUND PAT    : ' WS_FOUND_PAT                                 
+     LIST ' TOTAL NOT FOUND PAT: ' WS_NOTFOUND_PAT                              
+     LIST ' PROGRAM EXECUTE SUCCESSFULLY '                                      
+FIN                                                                             
+//*                                                                             

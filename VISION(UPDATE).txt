@@ -1,0 +1,44 @@
+//LYI6892Z JOB (0844,00000000),'UPDATE IP1 TABLE',                      J0034882
+//             CLASS=T,PRTY=15,                                                 
+//             REGION=0K,                                                       
+//             MSGCLASS=X,                                                      
+//             NOTIFY=LYI6892                                                   
+//**THIS VISION IS USED TO UPDATE THE ICD_CONV_DT FROM MRTEST.MRBIP1            
+//*********************************************************************         
+//**********************************************************************        
+//STEP010  EXEC PGM=DYL280,REGION=1024K,COND=(0,NE)                             
+//STEPLIB  DD DSN=PROD.LOADLIB,DISP=SHR                                         
+//         DD DSN=VISIONR.DB2DYN.LOAD,DISP=SHR                                  
+//         DD DSN=VISIONR.LOAD.LIBRARY,DISP=SHR                                 
+//         DD DSN=DGT1X.SDSNEXIT,DISP=SHR       <--- DB2 SDSNEXIT               
+//         DD DSN=DSNTEST.SDSNLOAD,DISP=SHR                                     
+//SYSCOPY  DD DSN=DB2TEST.DCLGEN,DISP=SHR                                       
+//SYSPRINT DD SYSOUT=*                                                          
+//SYS280R  DD SYSOUT=*                                                          
+//DYLDBUG  DD SYSOUT=*                                                          
+//SYS004   DD UNIT=SYSDA,SPACE=(TRK,(5,5))                                      
+//SYSIN    DD *                                                                 
+ REPORT 78 WIDE                                                                 
+ ;                                                                              
+ ;                                                                              
+                                                                                
+ FILE XFILE DUMMY                                                               
+                                                                                
+ ON ONE                                                                         
+                                                                                
+ EXEC SQL                                                                       
+    UPDATE  MRTEST.MRBIP1                                                       
+    SET  CD_CONV_DT = '2018-10-10'                                              
+    WHERE                                                                       
+    CO_ID = 16911                                                               
+ ENDEXEC                                                                        
+                                                                                
+ ENDONE                                                                         
+                                                                                
+ DONE:                                                                          
+                                                                                
+   STOP                                                                         
+                                                                                
+/*                                                                              
+//STEP011  EXEC PGM=ABEND,COND=(0,GE,STEP010),                                  
+//             PARM='DYLPROG ABEND'                                             

@@ -1,0 +1,252 @@
+//LYI6892Z JOB (0844,00000000),'REC1N2',                                J0051571
+//             CLASS=T,PRTY=15,                                         00000200
+//             REGION=0K,                                               00000300
+//             MSGCLASS=X,                                              00000400
+//             NOTIFY=LYI6892                                           00000500
+//*OWNER SHAH, SANTOSH        N/A      N/A                                      
+//*OWNER SHAH, SANTOSH        N/A      N/A                                      
+//*OWNER SHAH, SANTOSH        N/A      N/A                                      
+//*******************************************************************   00000700
+//************************************************************          00000800
+//JOBLIB    DD DSN=PROD.LOADLIB,DISP=SHR                                00000900
+//          DD DSN=DGT1X.SDSNEXIT,DISP=SHR                              00001000
+//          DD DSN=DSNTEST.SDSNLOAD,DISP=SHR                            00001100
+//********************************************************************* 00001200
+//*                                                                     00001300
+//********************************************************************* 00001400
+//STEP003  EXEC PGM=DYL280,REGION=1024K                                 00001500
+//STEPLIB  DD DSN=VISIONR.DB2DYN.LOAD,DISP=SHR                          00001600
+//         DD DSN=VISIONR.LOAD.LIBRARY,DISP=SHR                         00001700
+//         DD DSN=DGT1X.SDSNEXIT,DISP=SHR       <--- DB2 SDSNEXIT       00001800
+//         DD DSN=DSNTEST.SDSNLOAD,DISP=SHR                             00001900
+//SYSCOPY  DD DSN=DB2PROD.DCLGEN,DISP=SHR                               00002000
+//SYSPRINT DD SYSOUT=*                                                  00002100
+//SYS280R  DD SYSOUT=*                                                  00002200
+//DYLDBUG  DD SYSOUT=*                                                  00002300
+//FILEIN   DD DSN=TEST.REC01.REC02.DT0922.U16910.REC10,DISP=SHR         00002410
+//SYS004   DD UNIT=SYSDA,SPACE=(TRK,(5,5))                              00002500
+//SYSIN    DD *                                                         00002600
+ ;                                                                      00002700
+ ;                                                                      00002800
+*****************************************************************       00002900
+ OPTION STRUCTURED2 TSIZE 32K                                           00003000
+  REPORT 80 WIDE 3 BETWEEN                                              00003100
+                                                                        00003200
+  FILE FILEIN FB 240 STATUS ENDSTAT1                                    00003300
+    FI_REC             240 CH                                           00003400
+    REDEFINE FI_REC                                                     00003500
+    FI_COID            05 NU                                            00003600
+    FI_FILLER1         01 CH                                            00003700
+    FI_PAT_NUM         09 NU                                            00003800
+    FI_FILLER2         01 CH                                            00003900
+    FI_SRC_ADM         01 NU                                            00004000
+    FI_FILLER3         01 CH                                            00004100
+    FI_ADMIT_DX        07 CH                                            00004200
+                                                                        00004300
+*************************************                                   00004400
+ WORKAREA                                                               00004500
+*************************************                                   00004600
+*                                                                       00004700
+   COPY MRBPBL COBOL                                                    00004800
+   COPY MRBPAT COBOL                                                    00004900
+*                                                                       00005000
+STATEON                                                                 00005100
+   WS_SQL                  05 NU 1 Y VALUE 0 REINIT                     00005200
+   WS_COID               05 CH                                          00005300
+   WS_PAT_NUM            09 CH                                          00005400
+   WS_PAT_SEQ            01 CH                                          00005500
+   WS_SRC_ADM            01 CH                                          00005600
+   WS_ADMIT_DX           07 CH                                          00005700
+   WS_COMMIT_FREQ        07 NU  VALUE 0                                 00005710
+   WS_OUT_CNT            09 NU                                          00005800
+   WS_OUT_CNT_X          09 CH                                          00005900
+                                                                        00006000
+                                                                                
+WORKAREA                                                                        
+**********************                                                          
+  WS_PBL_CO_CD              01 CH                                               
+  WS_PBL_CO_ID              05 PD                                               
+  WS_PBL_PAT_NO             12 PD                                               
+  WS_TOT_REC                07 PD                                               
+  WS_COUNTER                07 NU  VALUE 0                                      
+  WS_TOT_COUNTER            07 NU  VALUE 0                                      
+                                                                                
+ EXEC SQL                                                                       
+    DECLARE MRBPBL1 CURSOR WITH HOLD FOR                                        
+    SELECT                                                                      
+    CO_CD, CO_ID, PAT_NO                                                        
+    FROM MRTEST.MRBPBL                                                          
+    WHERE                                                                       
+     CO_CD = 'A' AND                                                            
+     CO_ID = 16910                                                              
+ ENDEXEC                                                                        
+                                                                                
+ EXEC SQL                                                                       
+   OPEN MRBPBL1                                                                 
+ ENDEXEC                                                                        
+     IF DYLSQLSTAT EQ 'Y'                                                       
+       PRINT 'CURSOR MRBPBL1 OPENED'                                            
+     ELSE                                                                       
+       PRINT 'CURSOR MRBPBL1 OPEN FAILED'                                       
+       PERFORM STOPPARA                                                         
+     ENDIF                                                                      
+                                                                                
+                                                                                
+*----------                                                                     
+ FETCHPARA:                                                                     
+*----------                                                                     
+ DOWHILE DYLSQLSTAT EQ 'Y' OR DYLSQLSTAT EQ 'W'                                 
+   EXEC SQL                                                                     
+     FETCH MRBPBL1 INTO                                                         
+         :WS_PBL_CO_CD,                                                         
+         :WS_PBL_CO_ID,                                                         
+         :WS_PBL_PAT_NO                                                         
+   ENDEXEC                                                                      
+   IF DYLSQLSTAT EQ 'Y'                                                         
+      PERFORM SELMRBPBL TO EXTDEL                                               
+   ELSE                                                                         
+      PRINT 'END OF CURSOR FETCH'                                               
+      PRINT 'TOTAL MRBADR DELETES = ' WS_TOT_COUNTER                            
+   ENDIF                                                                        
+ ENDDO                                                                          
+                                                                                
+*----------                                                                     
+ CLOSEPARA:                                                                     
+*----------                                                                     
+ EXEC SQL                                                                       
+   CLOSE MRBPBL1                                                                
+ ENDEXEC                                                                        
+  IF DYLSQLSTAT EQ 'Y'                                                          
+    PRINT 'CURSOR MRBPBL1 CLOSED'                                               
+    PERFORM STOPPARA                                                            
+  ELSE                                                                          
+    PRINT 'CURSOR MRBPBL1 CLOSE FAILED'                                         
+    PERFORM STOPPARA                                                            
+  ENDIF                                                                         
+********************************************************************    00006100
+ MAINLINE:                                                              00006200
+********************************************************************    00006300
+                                                                                
+                                                                                
+*----------                                                                     
+ SELMRBPBL:                                                                     
+*----------                                                                     
+                                                                                
+  READ FILEIN                                                           00006400
+  IF ENDSTAT1 EQ 'E'                                                    00006500
+     GOTO EOJ                                                           00006600
+  ELSE                                                                  00006700
+         MOVE  FI_COID     TO WS_COID                                   00006800
+         MOVE  FI_PAT_NUM  TO WS_PAT_NUM                                00006900
+         MOVE  FI_SRC_ADM  TO WS_SRC_ADM                                00007000
+         MOVE  FI_ADMIT_DX TO WS_ADMIT_DX                               00007100
+     GOTO SELECTS                                                       00007200
+  ENDIF                                                                 00007300
+                                                                        00007400
+ SELECTS:                                                               00007500
+     EXEC SQL                                                           00007600
+      SELECT  PAT_SEQ                                                   00007700
+         INTO  :PBL_PAT_SEQ                                             00007800
+      FROM   MRTEST.MRBPBL                                              00007900
+      WHERE  CO_CD     = 'A'                                            00008000
+         AND CO_ID     = :WS_COID                                       00008100
+         AND PAT_NO    = :WS_PAT_NUM                                    00008200
+     ENDEXEC                                                            00008300
+                                                                        00008400
+ IF DYLSQLCODE EQ 0                                                     00008500
+    MOVE WS_ADMIT_DX  TO PAT_ADMIT_DX_CD_I10                            00008600
+    MOVE WS_COID      TO PAT_CO_ID                                      00008700
+    MOVE WS_PAT_NUM   TO PAT_PAT_NO                                     00008800
+    MOVE PBL_PAT_SEQ  TO PAT_PAT_SEQ                                    00008900
+    EXEC SQL                                                            00009000
+        UPDATE  MRTEST.MRBPAT                                           00009100
+              SET ADMIT_DX_CD_I10 = :PAT_ADMIT_DX_CD_I10                00009200
+        WHERE   CO_CD   = 'A'                                           00009300
+           AND  CO_ID   = :PAT_CO_ID                                    00009400
+           AND  PAT_NO  = :PAT_PAT_NO                                   00009500
+           AND  PAT_SEQ = :PAT_PAT_SEQ                                  00009600
+    ENDEXEC                                                             00009700
+                                                                        00009800
+                                                                                
+  IF DYLSQLSTAT EQ 'Y'                                                          
+     PERFORM COMMITPARA TO EXTCOMT                                              
+     WS_COUNTER = WS_COUNTER + 1                                                
+     WS_TOT_COUNTER = WS_TOT_COUNTER + 1                                        
+  ELSE                                                                          
+     PRINT 'DELETION UNSUCCESSFUL'                                              
+    PERFORM STOPPARA                                                            
+  ENDIF                                                                         
+                                                                                
+                                                                                
+    MOVE  WS_SRC_ADM TO PBL_SRC_OF_ADMIT                                00010800
+    EXEC SQL                                                            00010900
+        UPDATE  MRTEST.MRBPBL                                           00011000
+              SET SRC_OF_ADMIT = :PBL_SRC_OF_ADMIT                      00011100
+        WHERE   CO_CD   = 'A'                                           00011200
+           AND  CO_ID   = :PAT_CO_ID                                    00011300
+           AND  PAT_NO  = :PAT_PAT_NO                                   00011400
+           AND  PAT_SEQ = :PAT_PAT_SEQ                                  00011500
+    ENDEXEC                                                             00011600
+                                                                        00011700
+                                                                                
+  IF DYLSQLSTAT EQ 'Y'                                                          
+     PERFORM COMMITPARA TO EXTCOMT                                              
+     WS_COUNTER = WS_COUNTER + 1                                                
+     WS_TOT_COUNTER = WS_TOT_COUNTER + 1                                        
+  ELSE                                                                          
+     PRINT 'UPDATION UNSUCCESSFUL'                                              
+    PERFORM STOPPARA                                                            
+  ENDIF                                                                         
+                                                                                
+                                                                                
+ ELSE                                                                   00012700
+    IF DYLSQLCODE EQ 100                                                00012800
+       GOTO MAINLINE                                                    00013000
+    ELSE                                                                00013100
+       IF DYLSQLSTAT EQ 'N'                                             00013200
+              LIST 'FI_PAT_NUM:' PAT_PAT_NO                             00013300
+              WS_SQL = DYLSQLCODE                                       00013400
+              PRINT 'SELECT FAILED '                                    00013500
+                   DYLSQLSTAT '  DYSQLCODE: ' WS_SQL                    00013600
+         MOVE 0500 TO DYLRETURN                                         00013700
+         GOTO EOJ                                                       00013800
+       ENDIF                                                            00013900
+    ENDIF                                                               00014000
+ ENDIF                                                                  00014100
+ GOTO MAINLINE                                                          00014200
+                                                                                
+                                                                                
+*-------                                                                        
+ EXTDEL:                                                                        
+*-------                                                                        
+                                                                                
+*-----------                                                                    
+ COMMITPARA:                                                                    
+*-----------                                                                    
+ IF WS_COUNTER EQ 1000                                                          
+ EXEC SQL                                                                       
+    COMMIT WORK                                                                 
+ ENDEXEC                                                                        
+ PRINT 'UPDATE COMMITED SUCCESSFULLY'                                           
+ MOVE 0 TO WS_COUNTER                                                           
+ ENDIF                                                                          
+                                                                                
+*--------                                                                       
+ EXTCOMT:                                                                       
+*--------                                                                       
+                                                                                
+*--------                                                                       
+STOPPARA:                                                                       
+*--------                                                                       
+ STOP                                                                           
+                                                                                
+                                                                                
+**********************************************************              00014300
+ EOJ:                                                                   00014400
+  PRINT 'GOOD EOJ'                                                      00014500
+  MOVE WS_OUT_CNT TO WS_OUT_CNT_X                                       00014600
+  LIST 'TOTAL RECORDS INSERTED: ' WS_OUT_CNT_X                          00014700
+  STOP                                                                  00014800
+                                                                                
+                                                                                
+//*                                                                     00014900
